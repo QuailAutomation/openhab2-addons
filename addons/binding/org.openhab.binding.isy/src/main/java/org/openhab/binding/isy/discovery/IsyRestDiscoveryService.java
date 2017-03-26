@@ -14,7 +14,7 @@ import org.openhab.binding.isy.config.IsyInsteonDeviceConfiguration;
 import org.openhab.binding.isy.config.IsyProgramConfiguration;
 import org.openhab.binding.isy.config.IsyVariableConfiguration;
 import org.openhab.binding.isy.handler.IsyBridgeHandler;
-import org.openhab.binding.isy.internal.InsteonAddress;
+import org.openhab.binding.isy.internal.AddressDeterminer;
 import org.openhab.binding.isy.internal.Node;
 import org.openhab.binding.isy.internal.OHIsyClient;
 import org.openhab.binding.isy.internal.Program;
@@ -46,6 +46,8 @@ public class IsyRestDiscoveryService extends AbstractDiscoveryService {
         mMapDeviceTypeThingType.put("01.19", IsyBindingConstants.DIMMER_THING_TYPE);
         mMapDeviceTypeThingType.put("21.12", IsyBindingConstants.DIMMER_THING_TYPE);
         mMapDeviceTypeThingType.put("01.1F", IsyBindingConstants.DIMMER_THING_TYPE);
+        mMapDeviceTypeThingType.put("01.2E", IsyBindingConstants.DIMMER_THING_TYPE);
+        mMapDeviceTypeThingType.put("01.3A", IsyBindingConstants.DIMMER_THING_TYPE);
         mMapDeviceTypeThingType.put("07.00", IsyBindingConstants.GARAGEDOORKIT_THING_TYPE);
         mMapDeviceTypeThingType.put("10.02", IsyBindingConstants.TRIGGERLINC_THING_TYPE);
         mMapDeviceTypeThingType.put("02.2A", IsyBindingConstants.SWITCH_THING_TYPE);
@@ -56,6 +58,7 @@ public class IsyRestDiscoveryService extends AbstractDiscoveryService {
         mMapDeviceTypeThingType.put("02.37", IsyBindingConstants.SWITCH_THING_TYPE);
         mMapDeviceTypeThingType.put("02.08", IsyBindingConstants.SWITCH_THING_TYPE);
         mMapDeviceTypeThingType.put("02.38", IsyBindingConstants.SWITCH_THING_TYPE);
+        mMapDeviceTypeThingType.put("04.10", IsyBindingConstants.SWITCH_THING_TYPE);
         mMapDeviceTypeThingType.put("10.08", IsyBindingConstants.LEAKDETECTOR_THING_TYPE);
         mMapDeviceTypeThingType.put("01.1B", IsyBindingConstants.KEYPAD_LINC_6_THING_TYPE);
         mMapDeviceTypeThingType.put("01.41", IsyBindingConstants.KEYPADLINC_8_THING_TYPE);
@@ -191,14 +194,14 @@ public class IsyRestDiscoveryService extends AbstractDiscoveryService {
         List<Node> nodes = insteon.getNodes();
         logger.debug("found nodes(#): " + nodes.size());
         for (Node node : nodes) {
-            InsteonAddress insteonAddress = new InsteonAddress(node.getAddress());
+            AddressDeterminer addressDeterminer = new AddressDeterminer(node.getAddress());
 
             properties = new HashMap<>(0);
-            properties.put(IsyInsteonDeviceConfiguration.ADDRESS, insteonAddress.toStringNoDeviceId());
+            properties.put(IsyInsteonDeviceConfiguration.ADDRESS, addressDeterminer.toStringNoDeviceId());
             properties.put(IsyInsteonDeviceConfiguration.NAME, node.getName());
             properties.put(IsyInsteonDeviceConfiguration.DEVICEID, node.getTypeReadable());
 
-            if (insteonAddress.getDeviceId() == 1) {
+            if (addressDeterminer.getDeviceId() == 1) {
                 ThingTypeUID theThingTypeUid = mMapDeviceTypeThingType.get(node.getTypeReadable());
                 if (theThingTypeUid == null) {
                     logger.warn("Unsupported insteon node, name: " + node.getName() + ", type: "
