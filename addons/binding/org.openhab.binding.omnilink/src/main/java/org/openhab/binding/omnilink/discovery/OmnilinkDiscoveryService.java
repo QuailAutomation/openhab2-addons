@@ -10,7 +10,6 @@ import org.eclipse.smarthome.config.discovery.DiscoveryResultBuilder;
 import org.eclipse.smarthome.core.thing.ThingTypeUID;
 import org.eclipse.smarthome.core.thing.ThingUID;
 import org.openhab.binding.omnilink.OmnilinkBindingConstants;
-import org.openhab.binding.omnilink.config.OmnilinkUnitConfig;
 import org.openhab.binding.omnilink.handler.OmnilinkBridgeHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,6 +20,7 @@ import com.digitaldan.jomnilinkII.OmniInvalidResponseException;
 import com.digitaldan.jomnilinkII.OmniNotConnectedException;
 import com.digitaldan.jomnilinkII.OmniUnknownMessageTypeException;
 import com.digitaldan.jomnilinkII.MessageTypes.ObjectProperties;
+import com.digitaldan.jomnilinkII.MessageTypes.SystemInformation;
 import com.digitaldan.jomnilinkII.MessageTypes.properties.AreaProperties;
 import com.digitaldan.jomnilinkII.MessageTypes.properties.ButtonProperties;
 import com.digitaldan.jomnilinkII.MessageTypes.properties.UnitProperties;
@@ -31,6 +31,7 @@ public class OmnilinkDiscoveryService extends AbstractDiscoveryService {
     private static final Logger logger = LoggerFactory.getLogger(OmnilinkDiscoveryService.class);
     private static final int DISCOVER_TIMEOUT_SECONDS = 30;
     private OmnilinkBridgeHandler bridgeHandler;
+    private boolean isLumina = false;
 
     /**
      * Creates a IsyDiscoveryService.
@@ -59,6 +60,8 @@ public class OmnilinkDiscoveryService extends AbstractDiscoveryService {
         Connection c = bridgeHandler.getOmnilinkConnection();
         // OBJ_TYPE_BUTTON
         try {
+            SystemInformation info = c.reqSystemInformation();
+            isLumina = info.getModel() == 36 || info.getModel() == 37;
             generateUnits(c);
             generateZones(c);
             generateAreas(c);
@@ -82,8 +85,8 @@ public class OmnilinkDiscoveryService extends AbstractDiscoveryService {
             objnum = o.getNumber();
             Map<String, Object> properties = new HashMap<>(0);
             ThingUID thingUID = new ThingUID(OmnilinkBindingConstants.THING_TYPE_BUTTON, Integer.toString(objnum));
-            properties.put(OmnilinkUnitConfig.NUMBER, objnum);
-            properties.put(OmnilinkUnitConfig.NAME, o.getName());
+            properties.put(OmnilinkBindingConstants.THING_PROPERTIES_NUMBER, objnum);
+            properties.put(OmnilinkBindingConstants.THING_PROPERTIES_NAME, o.getName());
 
             DiscoveryResult discoveryResult;
 
@@ -114,9 +117,14 @@ public class OmnilinkDiscoveryService extends AbstractDiscoveryService {
             }
 
             Map<String, Object> properties = new HashMap<>(0);
-            ThingUID thingUID = new ThingUID(OmnilinkBindingConstants.THING_TYPE_AREA, Integer.toString(objnum));
-            properties.put(OmnilinkUnitConfig.NUMBER, objnum);
-            properties.put(OmnilinkUnitConfig.NAME, areaName);
+            ThingUID thingUID;
+            if (isLumina) {
+                thingUID = new ThingUID(OmnilinkBindingConstants.THING_TYPE_LUMINA_AREA, Integer.toString(objnum));
+            } else {
+                thingUID = new ThingUID(OmnilinkBindingConstants.THING_TYPE_OMNI_AREA, Integer.toString(objnum));
+            }
+            properties.put(OmnilinkBindingConstants.THING_PROPERTIES_NUMBER, objnum);
+            properties.put(OmnilinkBindingConstants.THING_PROPERTIES_NAME, areaName);
 
             DiscoveryResult discoveryResult;
 
@@ -168,8 +176,9 @@ public class OmnilinkDiscoveryService extends AbstractDiscoveryService {
 
             Map<String, Object> properties = new HashMap<>(0);
 
-            properties.put(OmnilinkUnitConfig.NUMBER, objnum);
-            properties.put(OmnilinkUnitConfig.NAME, o.getName());
+            properties.put(OmnilinkBindingConstants.THING_PROPERTIES_NUMBER, objnum);
+            properties.put(OmnilinkBindingConstants.THING_PROPERTIES_NAME, o.getName());
+
             DiscoveryResult discoveryResult;
             if (isRoomController) {
                 discoveryResult = DiscoveryResultBuilder
@@ -222,8 +231,8 @@ public class OmnilinkDiscoveryService extends AbstractDiscoveryService {
 
             Map<String, Object> properties = new HashMap<>(0);
             thingUID = new ThingUID(OmnilinkBindingConstants.THING_TYPE_ZONE, thingID);
-            properties.put(OmnilinkUnitConfig.NUMBER, objnum);
-            properties.put(OmnilinkUnitConfig.NAME, thingLabel);
+            properties.put(OmnilinkBindingConstants.THING_PROPERTIES_NUMBER, objnum);
+            properties.put(OmnilinkBindingConstants.THING_PROPERTIES_NAME, thingLabel);
 
             DiscoveryResult discoveryResult;
 

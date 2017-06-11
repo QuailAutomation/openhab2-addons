@@ -28,7 +28,6 @@ import org.eclipse.smarthome.core.types.RefreshType;
 import org.openhab.binding.omnilink.OmnilinkBindingConstants;
 import org.openhab.binding.omnilink.config.OmnilinkBridgeConfig;
 import org.openhab.binding.omnilink.discovery.OmnilinkDiscoveryService;
-import org.openhab.binding.omnilink.protocol.AreaAlarmStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -155,7 +154,7 @@ public class OmnilinkBridgeHandler extends BaseBridgeHandler implements Notifica
                     logger.debug("Attempting to connect to omnilink");
                     try {
                         OmnilinkBridgeConfig config = getThing().getConfiguration().as(OmnilinkBridgeConfig.class);
-                        omniConnection = new Connection(config.getIpAddress(), 4369,
+                        omniConnection = new Connection(config.getIpAddress(), config.getPort(),
 
                                 config.getKey1() + ":" + config.getKey2());
                         omniConnection.addNotificationListener(OmnilinkBridgeHandler.this);
@@ -229,8 +228,8 @@ public class OmnilinkBridgeHandler extends BaseBridgeHandler implements Notifica
                 AreaStatus areaStatus = (AreaStatus) s;
                 Integer number = new Integer(areaStatus.getNumber());
                 Thing theThing = areaThings.get(number);
-                logger.debug("AreaStatus: Mode={}, text={}", areaStatus.getMode(),
-                        AreaAlarmStatus.values()[areaStatus.getMode()]);
+                // logger.debug("AreaStatus: Mode={}, text={}", areaStatus.getMode(),
+                // AreaAlarmStatus.values()[areaStatus.getMode()]);
                 if (theThing != null) {
                     ((AreaHandler) theThing.getHandler()).handleAreaEvent(areaStatus);
                 }
