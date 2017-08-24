@@ -47,6 +47,20 @@ public abstract class CommonRpcParser<M, R> implements RpcParser<M, R> {
     }
 
     /**
+     * Converts the object to a double.
+     */
+    protected Double toDouble(Object object) {
+        if (object == null || object instanceof Double) {
+            return (Double) object;
+        }
+        try {
+            return Double.valueOf(ObjectUtils.toString(object));
+        } catch (NumberFormatException ex) {
+            return null;
+        }
+    }
+
+    /**
      * Converts the object to a number.
      */
     protected Number toNumber(Object object) {
@@ -112,7 +126,9 @@ public abstract class CommonRpcParser<M, R> implements RpcParser<M, R> {
      * Converts the value to the correct type if necessary.
      */
     protected Object convertToType(HmDatapoint dp, Object value) {
-        if (dp.isBooleanType()) {
+        if (value == null) {
+            return null;
+        } else if (dp.isBooleanType()) {
             return toBoolean(value);
         } else if (dp.isIntegerType()) {
             return toInteger(value);

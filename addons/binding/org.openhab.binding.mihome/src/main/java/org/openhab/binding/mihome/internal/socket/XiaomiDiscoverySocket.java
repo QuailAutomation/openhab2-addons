@@ -26,10 +26,10 @@ public class XiaomiDiscoverySocket extends XiaomiSocket {
 
     private static final int MCAST_PORT = 4321;
 
-    private static final Logger logger = LoggerFactory.getLogger(XiaomiDiscoverySocket.class);
+    private final Logger logger = LoggerFactory.getLogger(XiaomiDiscoverySocket.class);
 
     public XiaomiDiscoverySocket() {
-        super(0);
+        super();
     }
 
     /**

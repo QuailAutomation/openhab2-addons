@@ -31,6 +31,7 @@ import org.eclipse.smarthome.config.discovery.ExtendedDiscoveryService;
 import org.eclipse.smarthome.core.thing.Thing;
 import org.eclipse.smarthome.core.thing.ThingTypeUID;
 import org.eclipse.smarthome.core.thing.ThingUID;
+import org.osgi.service.component.annotations.Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,6 +41,7 @@ import org.slf4j.LoggerFactory;
  *
  * @author Mark Hilbush - Initial contribution
  */
+@Component(immediate = true)
 public class BigAssFanDiscoveryService extends AbstractDiscoveryService implements ExtendedDiscoveryService {
     private final Logger logger = LoggerFactory.getLogger(BigAssFanDiscoveryService.class);
 
@@ -182,25 +184,39 @@ public class BigAssFanDiscoveryService extends AbstractDiscoveryService implemen
             device.setLabel(matcher.group(1));
             device.setMacAddress(matcher.group(2));
             String[] modelParts = matcher.group(3).split(",");
-            if (modelParts.length != 2) {
-                logger.info("Unable to extract device type from discovery message");
-                return;
+            switch (modelParts.length) {
+                case 2:
+                    // L-Series fans
+                    device.setType(modelParts[0]);
+                    device.setModel(modelParts[1]);
+                    deviceDiscovered(device);
+                    break;
+                case 3:
+                    // H-Series fans
+                    device.setType(modelParts[0]);
+                    device.setModel(modelParts[2]);
+                    deviceDiscovered(device);
+                    break;
+                default:
+                    logger.info("Unable to extract device type from discovery message");
+                    break;
             }
-            device.setType(modelParts[0]);
-            device.setModel(modelParts[1]);
-
-            deviceDiscovered(device);
         }
     }
 
     private synchronized void deviceDiscovered(BigAssFanDevice device) {
         logger.debug("Device discovered: {}", device);
 
+        ThingTypeUID thingTypeUid;
+
         if (device.isSwitch()) {
-            logger.debug("Switches (controllers) are not handled currently");
-            return;
+            logger.debug("Add controller with IP={}, MAC={}, MODEL={}", device.getIpAddress(), device.getMacAddress(),
+                    device.getModel());
+            thingTypeUid = THING_TYPE_CONTROLLER;
         } else if (device.isFan()) {
-            logger.debug("Add fan with IP={}, MAC={}", device.getIpAddress(), device.getMacAddress());
+            logger.debug("Add fan with IP={}, MAC={}, MODEL={}", device.getIpAddress(), device.getMacAddress(),
+                    device.getModel());
+            thingTypeUid = THING_TYPE_FAN;
         } else {
             logger.info("Discovered unknown device type {} at IP={}", device.getModel(), device.getIpAddress());
             return;
@@ -217,7 +233,7 @@ public class BigAssFanDiscoveryService extends AbstractDiscoveryService implemen
         properties.put(Thing.PROPERTY_MODEL_ID, device.getModel());
         properties.put(Thing.PROPERTY_VENDOR, "Haiku");
 
-        ThingUID uid = new ThingUID(THING_TYPE_FAN, serialNumber);
+        ThingUID uid = new ThingUID(thingTypeUid, serialNumber);
         // If there's not a thing and it's not in the inbox, create the discovery result
         if (callback != null && callback.getExistingDiscoveryResult(uid) == null
                 && callback.getExistingThing(uid) == null) {
@@ -233,7 +249,7 @@ public class BigAssFanDiscoveryService extends AbstractDiscoveryService implemen
     }
 
     private void schedulePollJob() {
-        logger.debug("Scheduling poll job to run every {} seconds starting in {} sec", POLL_FREQ, POLL_DELAY);
+        logger.debug("Scheduling discovery poll job to run every {} seconds starting in {} sec", POLL_FREQ, POLL_DELAY);
         cancelPollJob();
         pollJob = scheduler.scheduleAtFixedRate(new Runnable() {
             @Override

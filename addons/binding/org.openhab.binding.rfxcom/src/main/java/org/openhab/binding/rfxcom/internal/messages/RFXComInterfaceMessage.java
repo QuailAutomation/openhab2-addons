@@ -268,9 +268,9 @@ public class RFXComInterfaceMessage extends RFXComBaseMessage {
         super.encodeMessage(data);
 
         subType = SubType.fromByte(super.subType);
-        command = Commands.fromByte(data[4]);
 
         if (subType == SubType.RESPONSE) {
+            command = Commands.fromByte(data[4]);
             transceiverType = TransceiverType.fromByte(data[5]);
 
             firmwareVersion = data[6] & 0xFF;
@@ -310,7 +310,8 @@ public class RFXComInterfaceMessage extends RFXComBaseMessage {
              * firmware version and pray. This condition below is taken from the
              * openhab1-addons binding.
              */
-            if ((firmwareVersion >= 95 && firmwareVersion <= 100) || (firmwareVersion >= 195 && firmwareVersion <= 200) || (firmwareVersion >= 251)) {
+            if ((firmwareVersion >= 95 && firmwareVersion <= 100) || (firmwareVersion >= 195 && firmwareVersion <= 200)
+                    || (firmwareVersion >= 251)) {
                 enableHomeConfortPackets = (data[10] & 0x02) != 0;
                 enableKEELOQPackets = (data[10] & 0x01) != 0;
 
@@ -327,6 +328,8 @@ public class RFXComInterfaceMessage extends RFXComBaseMessage {
             text = "";
 
         } else if (subType == SubType.START_RECEIVER) {
+            command = Commands.fromByte(data[4]);
+
             final int len = 16;
             final int dataOffset = 5;
 
@@ -341,6 +344,11 @@ public class RFXComInterfaceMessage extends RFXComBaseMessage {
             } catch (UnsupportedEncodingException e) {
                 // ignore
             }
+        } else {
+            // We don't handle the other subTypes but to avoid null pointer
+            // exceptions we set command to something. It doesn't really
+            // matter what but it may b printed in log messages so...
+            command = Commands.UNSUPPORTED_COMMAND;
         }
     }
 

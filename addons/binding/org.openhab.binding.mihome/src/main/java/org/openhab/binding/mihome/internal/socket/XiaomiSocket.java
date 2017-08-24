@@ -44,7 +44,7 @@ public abstract class XiaomiSocket {
 
     private final Logger logger = LoggerFactory.getLogger(XiaomiSocket.class);
 
-    private static ConcurrentHashMap<Integer, DatagramSocket> OPEN_SOCKETS = new ConcurrentHashMap<Integer, DatagramSocket>();
+    private static ConcurrentHashMap<Integer, DatagramSocket> openSockets = new ConcurrentHashMap<Integer, DatagramSocket>();
 
     private int port;
     private DatagramSocket socket;
@@ -65,6 +65,9 @@ public abstract class XiaomiSocket {
      */
     public XiaomiSocket(int port) {
         this.port = port;
+    }
+
+    public void intialize() {
         setupSocket();
         runReceiveThread();
     }
@@ -91,7 +94,7 @@ public abstract class XiaomiSocket {
             }
             if (getSocket() != null) {
                 logger.debug("Closing socket {}", getSocket());
-                OPEN_SOCKETS.remove(getSocket().getLocalPort());
+                openSockets.remove(getSocket().getLocalPort());
                 getSocket().close();
                 setSocket(null);
             }
@@ -110,8 +113,7 @@ public abstract class XiaomiSocket {
             getListeners().add(listener);
         }
         if (getSocket() == null) {
-            setupSocket();
-            runReceiveThread();
+            intialize();
         }
     }
 
@@ -158,7 +160,7 @@ public abstract class XiaomiSocket {
      * @return - a list of already open sockets
      */
     public static ConcurrentHashMap<Integer, DatagramSocket> getOpenSockets() {
-        return OPEN_SOCKETS;
+        return openSockets;
     }
 
     protected DatagramSocket getSocket() {

@@ -17,8 +17,12 @@ from the [Google Play](https://play.google.com/store/apps/details?id=com.xiaomi.
 * Xiaomi Aqara ZigBee Wired Wall Switch (1 and 2 buttons)
 * Xiaomi Aqara ZigBee Wireless Wall Switch (1 and 2 buttons)
 * Xiaomi Aqara Smart Curtain
+* Xiaomi Aqara Wireless Switch (square one)
+* Xiaomi Aqara Temperature, Humidity and Pressure Sensor (square one)
+* Xiaomi Aqara Door/Window Sensor (square one)
 
 (not yet confirmed)
+
 * Xiaomi Aqara Neutral Wall Switch (1 and 2 buttons)
 * Xiaomi Mijia Honeywell Gas Alarm Detector
 * Xiaomi Mijia Honeywell Fire Alarm Detector
@@ -280,7 +284,7 @@ end
 // This rule is applicable for every battery powered sensor device
 rule "Xiaomi Motion Sensor Low Battery"
 when
-    Channel "mihome:sensor_motion:<ID>:lowBattery" changed to ON
+    Item MotionSensor_BatteryLow changed to ON
 then
     <ACTION>
 end

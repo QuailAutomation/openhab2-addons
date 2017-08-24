@@ -16,6 +16,7 @@ import org.eclipse.smarthome.core.thing.ThingTypeUID;
  *
  * @author Patrick Boos - Initial contribution
  * @author Dieter Schmidt - added cube, gateway sound channels, window sensor alarm
+ * @author Daniel Walters - Added Aqara Door/Window sensor and Aqara temperature, humidity and pressure sensor
  */
 public class XiaomiGatewayBindingConstants {
 
@@ -25,20 +26,25 @@ public class XiaomiGatewayBindingConstants {
     public static final ThingTypeUID THING_TYPE_GATEWAY = new ThingTypeUID(BINDING_ID, "gateway");
     // sensors
     public static final ThingTypeUID THING_TYPE_SENSOR_HT = new ThingTypeUID(BINDING_ID, "sensor_ht");
+    public static final ThingTypeUID THING_TYPE_SENSOR_AQARA_WEATHER_V1 = new ThingTypeUID(BINDING_ID,
+            "sensor_weather_v1");
     public static final ThingTypeUID THING_TYPE_SENSOR_MOTION = new ThingTypeUID(BINDING_ID, "sensor_motion");
     public static final ThingTypeUID THING_TYPE_SENSOR_SWITCH = new ThingTypeUID(BINDING_ID, "sensor_switch");
+    public static final ThingTypeUID THING_TYPE_SENSOR_AQARA_SWITCH = new ThingTypeUID(BINDING_ID, "sensor_switch_aq2");
     public static final ThingTypeUID THING_TYPE_SENSOR_MAGNET = new ThingTypeUID(BINDING_ID, "sensor_magnet");
+    public static final ThingTypeUID THING_TYPE_SENSOR_AQARA_MAGNET = new ThingTypeUID(BINDING_ID, "sensor_magnet_aq2");
     public static final ThingTypeUID THING_TYPE_SENSOR_CUBE = new ThingTypeUID(BINDING_ID, "sensor_cube");
     public static final ThingTypeUID THING_TYPE_SENSOR_AQARA1 = new ThingTypeUID(BINDING_ID, "86sw1");
     public static final ThingTypeUID THING_TYPE_SENSOR_AQARA2 = new ThingTypeUID(BINDING_ID, "86sw2");
     public static final ThingTypeUID THING_TYPE_SENSOR_GAS = new ThingTypeUID(BINDING_ID, "natgas");
     public static final ThingTypeUID THING_TYPE_SENSOR_SMOKE = new ThingTypeUID(BINDING_ID, "smoke");
+
     // actors
     public static final ThingTypeUID THING_TYPE_ACTOR_PLUG = new ThingTypeUID(BINDING_ID, "sensor_plug");
     public static final ThingTypeUID THING_TYPE_ACTOR_AQARA1 = new ThingTypeUID(BINDING_ID, "ctrl_neutral1");
     public static final ThingTypeUID THING_TYPE_ACTOR_AQARA2 = new ThingTypeUID(BINDING_ID, "ctrl_neutral2");
-    public static final ThingTypeUID THING_TYPE_ACTOR_WALL1 = new ThingTypeUID(BINDING_ID, "ctrl_ln1");
-    public static final ThingTypeUID THING_TYPE_ACTOR_WALL2 = new ThingTypeUID(BINDING_ID, "ctrl_ln2");
+    public static final ThingTypeUID THING_TYPE_ACTOR_AQARA_ZERO1 = new ThingTypeUID(BINDING_ID, "ctrl_ln1");
+    public static final ThingTypeUID THING_TYPE_ACTOR_AQARA_ZERO2 = new ThingTypeUID(BINDING_ID, "ctrl_ln2");
     public static final ThingTypeUID THING_TYPE_ACTOR_CURTAIN = new ThingTypeUID(BINDING_ID, "curtain");
 
     // List of all Channel ids
@@ -47,6 +53,7 @@ public class XiaomiGatewayBindingConstants {
     // TH sensor
     public static final String CHANNEL_TEMPERATURE = "temperature";
     public static final String CHANNEL_HUMIDITY = "humidity";
+    public static final String CHANNEL_PRESSURE = "pressure";
     // motion sensor
     public static final String CHANNEL_MOTION = "motion";
     public static final String CHANNEL_MOTION_OFF_TIMER = "motionOffTimer";

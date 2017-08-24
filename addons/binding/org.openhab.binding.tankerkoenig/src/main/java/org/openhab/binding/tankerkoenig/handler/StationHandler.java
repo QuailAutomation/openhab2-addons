@@ -15,11 +15,13 @@ import java.util.concurrent.TimeUnit;
 
 import org.eclipse.smarthome.config.core.Configuration;
 import org.eclipse.smarthome.core.library.types.DecimalType;
+import org.eclipse.smarthome.core.library.types.OpenClosedType;
 import org.eclipse.smarthome.core.thing.Bridge;
 import org.eclipse.smarthome.core.thing.ChannelUID;
 import org.eclipse.smarthome.core.thing.Thing;
 import org.eclipse.smarthome.core.thing.ThingStatus;
 import org.eclipse.smarthome.core.thing.ThingStatusDetail;
+import org.eclipse.smarthome.core.thing.ThingStatusInfo;
 import org.eclipse.smarthome.core.thing.binding.BaseThingHandler;
 import org.eclipse.smarthome.core.types.Command;
 import org.openhab.binding.tankerkoenig.TankerkoenigBindingConstants;
@@ -108,6 +110,14 @@ public class StationHandler extends BaseThingHandler {
         super.dispose();
     }
 
+    @Override
+    public void bridgeStatusChanged(ThingStatusInfo bridgeStatusInfo) {
+        logger.debug("Bridge Status updated to {} for device: {}", bridgeStatusInfo.getStatus(), getThing().getUID());
+        if (bridgeStatusInfo.getStatus() != ThingStatus.ONLINE) {
+            updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.BRIDGE_OFFLINE, bridgeStatusInfo.getDescription());
+        }
+    }
+
     /***
      * Updates the channels of a station item
      *
@@ -115,11 +125,10 @@ public class StationHandler extends BaseThingHandler {
      */
     public void updateData(LittleStation station) {
         logger.debug("Update Tankerkoenig data '{}'", getThing().getUID());
-
         DecimalType diesel = new DecimalType(station.getDiesel());
         DecimalType e10 = new DecimalType(station.getE10());
         DecimalType e5 = new DecimalType(station.getE5());
-
+        updateState(CHANNEL_STATION_OPEN, (station.isOpen() ? OpenClosedType.OPEN : OpenClosedType.CLOSED));
         updateState(CHANNEL_DIESEL, diesel);
         updateState(CHANNEL_E10, e10);
         updateState(CHANNEL_E5, e5);
@@ -146,8 +155,7 @@ public class StationHandler extends BaseThingHandler {
             handler.updateStatus(ThingStatus.ONLINE);
             logger.debug("updateDetailData openingTimes: {}", this.openingTimes);
         } else {
-            updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.COMMUNICATION_ERROR,
-                    "Empty return or no internet connection");
+            updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.COMMUNICATION_ERROR, result.getMessage());
         }
     }
 

@@ -26,8 +26,6 @@ import org.eclipse.smarthome.core.thing.binding.ThingHandler;
 import org.openhab.binding.mihome.handler.XiaomiActorCurtainHandler;
 import org.openhab.binding.mihome.handler.XiaomiActorGatewayHandler;
 import org.openhab.binding.mihome.handler.XiaomiActorPlugHandler;
-import org.openhab.binding.mihome.handler.XiaomiActorWallSwitch1;
-import org.openhab.binding.mihome.handler.XiaomiActorWallSwitch2;
 import org.openhab.binding.mihome.handler.XiaomiAqaraActorSwitch1Handler;
 import org.openhab.binding.mihome.handler.XiaomiAqaraActorSwitch2Handler;
 import org.openhab.binding.mihome.handler.XiaomiAqaraSensorSwitch1Handler;
@@ -50,6 +48,7 @@ import com.google.common.collect.Sets;
  *
  * @author Patrick Boos - Initial contribution
  * @author Dieter Schmidt - Refactor, add devices
+ * @author Daniel Walters - Added Aqara Door/Window sensor and Aqara temperature, humidity and pressure sensor
  */
 public class XiaomiHandlerFactory extends BaseThingHandlerFactory {
 
@@ -110,6 +109,8 @@ public class XiaomiHandlerFactory extends BaseThingHandlerFactory {
             return new XiaomiSensorMotionHandler(thing);
         } else if (thingTypeUID.equals(THING_TYPE_SENSOR_SWITCH)) {
             return new XiaomiSensorSwitchHandler(thing);
+        } else if (thingTypeUID.equals(THING_TYPE_SENSOR_AQARA_SWITCH)) {
+            return new XiaomiSensorSwitchHandler(thing);
         } else if (thingTypeUID.equals(THING_TYPE_SENSOR_MAGNET)) {
             return new XiaomiSensorMagnetHandler(thing);
         } else if (thingTypeUID.equals(THING_TYPE_SENSOR_CUBE)) {
@@ -124,12 +125,16 @@ public class XiaomiHandlerFactory extends BaseThingHandlerFactory {
             return new XiaomiAqaraActorSwitch2Handler(thing);
         } else if (thingTypeUID.equals(THING_TYPE_ACTOR_PLUG)) {
             return new XiaomiActorPlugHandler(thing);
-        } else if (thingTypeUID.equals(THING_TYPE_ACTOR_WALL1)) {
-            return new XiaomiActorWallSwitch1(thing);
-        } else if (thingTypeUID.equals(THING_TYPE_ACTOR_WALL2)) {
-            return new XiaomiActorWallSwitch2(thing);
+        } else if (thingTypeUID.equals(THING_TYPE_ACTOR_AQARA_ZERO1)) {
+            return new XiaomiAqaraActorSwitch1Handler(thing);
+        } else if (thingTypeUID.equals(THING_TYPE_ACTOR_AQARA_ZERO2)) {
+            return new XiaomiAqaraActorSwitch2Handler(thing);
         } else if (thingTypeUID.equals(THING_TYPE_ACTOR_CURTAIN)) {
             return new XiaomiActorCurtainHandler(thing);
+        } else if (THING_TYPE_SENSOR_AQARA_WEATHER_V1.equals(thingTypeUID)) {
+            return new XiaomiSensorHtHandler(thing);
+        } else if (THING_TYPE_SENSOR_AQARA_MAGNET.equals(thingTypeUID)) {
+            return new XiaomiSensorMagnetHandler(thing);
         } else {
             return null;
         }
