@@ -21,6 +21,9 @@ import org.openhab.binding.isy.internal.OHIsyClient;
 import org.openhab.binding.isy.internal.VariableType;
 import org.openhab.binding.isy.internal.protocol.Event;
 import org.openhab.binding.isy.internal.protocol.EventInfo;
+import org.openhab.binding.isy.internal.protocol.Node;
+import org.openhab.binding.isy.internal.protocol.NodeInfo;
+import org.openhab.binding.isy.internal.protocol.Nodes;
 import org.openhab.binding.isy.internal.protocol.Properties;
 import org.openhab.binding.isy.internal.protocol.Property;
 import org.openhab.binding.isy.internal.protocol.StateVariable;
@@ -64,7 +67,8 @@ public class IsyBridgeHandler extends BaseBridgeHandler implements InsteonClient
         xStream.setClassLoader(IsyRestDiscoveryService.class.getClassLoader());
         xStream.processAnnotations(new Class[] { Properties.class, Property.class, Event.class, EventInfo.class,
                 ZoneEvent.class, AreaEvent.class, VariableList.class, StateVariable.class, VariableEvent.class,
-                SubscriptionResponse.class, Topology.class, Zone.class, ElkStatus.class, Areas.class, Area.class });
+                SubscriptionResponse.class, Topology.class, Zone.class, ElkStatus.class, Areas.class, Area.class,
+                Node.class, Nodes.class, NodeInfo.class });
     }
 
     @Override
@@ -191,5 +195,4 @@ public class IsyBridgeHandler extends BaseBridgeHandler implements InsteonClient
     public OHIsyClient getInsteonClient() {
         return isyClient;
     }
-
 }

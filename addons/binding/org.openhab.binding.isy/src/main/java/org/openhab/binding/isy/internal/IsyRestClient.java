@@ -21,6 +21,7 @@ import javax.xml.xpath.XPathExpression;
 import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
 
+import org.openhab.binding.isy.internal.protocol.NodeInfo;
 import org.openhab.binding.isy.internal.protocol.Properties;
 import org.openhab.binding.isy.internal.protocol.Property;
 import org.openhab.binding.isy.internal.protocol.StateVariable;
@@ -89,7 +90,7 @@ public class IsyRestClient implements OHIsyClient {
     }
 
     @Override
-    public Property getNodeStatus(String node) {
+    public Property getNodeStatus(String node, String propertyName) {
         WebTarget target = statusTarget.path(node);
         logger.trace("getNodeStatus url: {}", target.getUri().toString());
         String theResult = target.request().header(AUTHORIZATIONHEADERNAME, authorizationHeaderValue)
@@ -100,11 +101,40 @@ public class IsyRestClient implements OHIsyClient {
         if (objResult instanceof Properties) {
             for (Property property : ((Properties) objResult).getProperties()) {
                 logger.debug("[property] id: {}, value: {}", property.id, property.value);
-                if ("ST".equals(property.id)) {
+                if (propertyName.equals(property.id)) {
                     return property;
                 }
-
             }
+        }
+        return null;
+    }
+
+    @Override
+    public Property getNodeStatus(String node) {
+        return this.getNodeStatus(node, "ST");
+    }
+
+    @Override
+    public NodeInfo getNodeInfo(String node) {
+        WebTarget target = nodesTarget.path(node);
+        logger.trace("getNodeProperties url: {}", target.getUri().toString());
+        String theResult = target.request().header(AUTHORIZATIONHEADERNAME, authorizationHeaderValue)
+                .accept(MediaType.TEXT_XML).get(String.class);
+        logger.debug("theResult is: {}", theResult);
+
+        Object objResult = xStream.fromXML(theResult);
+        if (objResult instanceof NodeInfo) {
+            return ((NodeInfo) objResult);
+        }
+        return null;
+    }
+
+    @Override
+    public Properties getNodeProperties(String node) {
+
+        NodeInfo nodeInfo = this.getNodeInfo(node);
+        if (nodeInfo != null) {
+            return nodeInfo.getProperties();
         }
         return null;
     }
@@ -121,6 +151,22 @@ public class IsyRestClient implements OHIsyClient {
                 authorizationHeaderValue);
         Response result = changeNodeTarget.get();
         logger.debug("Result of call: {} ", result.toString());
+        logger.debug("Result status:  {}", result.getStatus());
+        return result.getStatus() == 200;
+    }
+
+    @Override
+    public boolean changeNodeProperty(String property, String value, String address) {
+        logger.debug("changeNodeProperty called, property: {}, value: {}, address: {}", property, value, address);
+        WebTarget changeNodeWebTarget = nodesTarget.path(address).path("set").path(property);
+        if (value != null) {
+            changeNodeWebTarget = changeNodeWebTarget.path(value);
+        }
+        logger.debug("changeNodeProperty url: {}", changeNodeWebTarget.getUri().toString());
+        Builder changeNodeTarget = changeNodeWebTarget.request().header(AUTHORIZATIONHEADERNAME,
+                authorizationHeaderValue);
+        Response result = changeNodeTarget.get();
+        logger.debug("Result of changeNodeProperty call: {} ", result.toString());
         logger.debug("Result status:  {}", result.getStatus());
         return result.getStatus() == 200;
     }
@@ -352,13 +398,18 @@ public class IsyRestClient implements OHIsyClient {
     public VariableList getVariableDefinitions(VariableType type) {
         String message = stateVariablesDefinitionsTarget.path(Integer.toString(type.getType())).request()
                 .header(AUTHORIZATIONHEADERNAME, authorizationHeaderValue).accept(MediaType.TEXT_XML).get(String.class);
-        logger.trace("theResult is: {}", message);
+        logger.debug("theResult is: {}", message);
 
         Object objResult = xStream.fromXML(message);
         if (objResult instanceof VariableList) {
-            for (StateVariable variable : ((VariableList) objResult).getStateVariables()) {
-                logger.debug("[variable] id: {}, name: {}", variable.getId(), variable.getName());
 
+            List<StateVariable> variableList = ((VariableList) objResult).getStateVariables();
+            if (variableList != null) {
+                for (StateVariable variable : variableList) {
+                    logger.debug("[variable] id: {}, name: {}", variable.getId(), variable.getName());
+                }
+            } else {
+                logger.debug("variable list is null");
             }
         }
         return (VariableList) objResult;
@@ -376,5 +427,4 @@ public class IsyRestClient implements OHIsyClient {
         // throw new IllegalArgumentException(
         // "Could not retrieve value for variable type: " + type.getType() + ", id: " + id);
     }
-
 }

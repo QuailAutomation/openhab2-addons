@@ -79,19 +79,24 @@ public class IsyRestDiscoveryService extends AbstractDiscoveryService {
         mMapDeviceTypeThingType.put("02.2F", IsyBindingConstants.SWITCH_THING_TYPE);
         mMapDeviceTypeThingType.put("10.08", IsyBindingConstants.LEAKDETECTOR_THING_TYPE);
         mMapDeviceTypeThingType.put("01.1B", IsyBindingConstants.KEYPAD_LINC_6_THING_TYPE);
+        mMapDeviceTypeThingType.put("02.2C", IsyBindingConstants.KEYPAD_LINC_6_THING_TYPE);
         mMapDeviceTypeThingType.put("01.41", IsyBindingConstants.KEYPADLINC_8_THING_TYPE);
         mMapDeviceTypeThingType.put("01.42", IsyBindingConstants.KEYPAD_LINC_5_THING_TYPE);
         mMapDeviceTypeThingType.put("00.05", IsyBindingConstants.REMOTELINC_8_THING_TYPE);
         mMapDeviceTypeThingType.put("00.12", IsyBindingConstants.REMOTELINC_8_THING_TYPE);
         mMapDeviceTypeThingType.put("01.1C", IsyBindingConstants.KEYPADLINC_8_THING_TYPE);
         mMapDeviceTypeThingType.put("01.41", IsyBindingConstants.KEYPADLINC_8_THING_TYPE);
+        mMapDeviceTypeThingType.put("01.1A", IsyBindingConstants.INLINELINC_SWITCH_THING_TYPE);
         mMapDeviceTypeThingType.put("02.10", IsyBindingConstants.INLINELINC_SWITCH_THING_TYPE);
         mMapDeviceTypeThingType.put("02.1F", IsyBindingConstants.INLINELINC_SWITCH_THING_TYPE);
+        mMapDeviceTypeThingType.put("01.21", IsyBindingConstants.INLINELINC_SWITCH_THING_TYPE);
         mMapDeviceTypeThingType.put("02.08", IsyBindingConstants.OUTLETLINC_DIMMER_THING_TYPE);
         mMapDeviceTypeThingType.put("02.39", IsyBindingConstants.OUTLETLINC_DUAL_THING_TYPE);
         mMapDeviceTypeThingType.put("02.1A", IsyBindingConstants.TOGGLELINC_THING_TYPE);
         mMapDeviceTypeThingType.put("10.11", IsyBindingConstants.HIDDENDOORSENSOR_THING_TYPE);
-
+        mMapDeviceTypeThingType.put("10.0A", IsyBindingConstants.SMOKE_DETECTOR_THING_TYPE);
+        mMapDeviceTypeThingType.put("05.03", IsyBindingConstants.VENSTAR_THERMOSTAT_THING_TYPE);
+        mMapDeviceTypeThingType.put("03.0D", IsyBindingConstants.EZX10_RF_THING_TYPE);
     }
 
     public void activate() {
@@ -129,6 +134,10 @@ public class IsyRestDiscoveryService extends AbstractDiscoveryService {
             logger.error("error in discover programs", e);
         }
 
+        // (TH) POTENTIAL HACK
+        // it would be nice to restart the web socket to the ISY after discovery is done
+        // the web socket is started to early, before any isy "things" are created, thus the initial ws update from the
+        // isy is missed
     }
 
     private void discoverPrograms() {
@@ -187,20 +196,23 @@ public class IsyRestDiscoveryService extends AbstractDiscoveryService {
         OHIsyClient insteon = this.bridgeHandler.getInsteonClient();
         Map<String, Object> properties = null;
         ThingUID bridgeUID = this.bridgeHandler.getThing().getUID();
-        for (StateVariable variable : insteon.getVariableDefinitions(variableType).getStateVariables()) {
-            logger.debug("discovered variable, id:{}, name: {} ", variable.getId(), variable.getName());
-            properties = new HashMap<>(0);
-            properties.put(IsyVariableConfiguration.ID, variable.getId());
-            properties.put(IsyVariableConfiguration.TYPE, variableType.getType());
+        List<StateVariable> variableList = insteon.getVariableDefinitions(variableType).getStateVariables();
+        if (variableList != null) {
+            for (StateVariable variable : variableList) {
+                logger.debug("discovered variable, id:{}, name: {} ", variable.getId(), variable.getName());
+                properties = new HashMap<>(0);
+                properties.put(IsyVariableConfiguration.ID, variable.getId());
+                properties.put(IsyVariableConfiguration.TYPE, variableType.getType());
 
-            String typeAsText = variableType.equals(VariableType.INTEGER) ? "integer" : "state";
+                String typeAsText = variableType.equals(VariableType.INTEGER) ? "integer" : "state";
 
-            ThingTypeUID theThingTypeUid = IsyBindingConstants.VARIABLE_THING_TYPE;
-            String thingID = typeAsText + "_" + variable.getId();
-            ThingUID thingUID = new ThingUID(theThingTypeUid, bridgeUID, thingID);
-            DiscoveryResult discoveryResult = DiscoveryResultBuilder.create(thingUID).withBridge(bridgeUID)
-                    .withProperties(properties).withBridge(bridgeUID).withLabel(variable.getName()).build();
-            thingDiscovered(discoveryResult);
+                ThingTypeUID theThingTypeUid = IsyBindingConstants.VARIABLE_THING_TYPE;
+                String thingID = typeAsText + "_" + variable.getId();
+                ThingUID thingUID = new ThingUID(theThingTypeUid, bridgeUID, thingID);
+                DiscoveryResult discoveryResult = DiscoveryResultBuilder.create(thingUID).withBridge(bridgeUID)
+                        .withProperties(properties).withBridge(bridgeUID).withLabel(variable.getName()).build();
+                thingDiscovered(discoveryResult);
+            }
         }
     }
 

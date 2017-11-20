@@ -22,6 +22,7 @@ import org.eclipse.smarthome.core.thing.ThingUID;
 import org.eclipse.smarthome.core.thing.binding.BaseThingHandlerFactory;
 import org.eclipse.smarthome.core.thing.binding.ThingHandler;
 import org.openhab.binding.isy.discovery.IsyRestDiscoveryService;
+import org.openhab.binding.isy.handler.special.VenstarThermostatDeviceHandler;
 import org.osgi.framework.ServiceRegistration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -43,7 +44,7 @@ public class IsyHandlerFactory extends BaseThingHandlerFactory {
             INLINELINC_SWITCH_THING_TYPE, PROGRAM_THING_TYPE, VARIABLE_THING_TYPE, SCENE_THING_TYPE,
             UNRECOGNIZED_SWITCH_THING_TYPE, KEYPADLINC_8_THING_TYPE, OUTLETLINC_DIMMER_THING_TYPE,
             TRIGGERLINC_THING_TYPE, TOGGLELINC_THING_TYPE, HIDDENDOORSENSOR_THING_TYPE, OUTLETLINC_DUAL_THING_TYPE,
-            FANLINC_THING_TYPE);
+            FANLINC_THING_TYPE, SMOKE_DETECTOR_THING_TYPE, VENSTAR_THERMOSTAT_THING_TYPE, EZX10_RF_THING_TYPE);
 
     private Map<ThingUID, ServiceRegistration<?>> discoveryServiceRegistrations = new HashMap<ThingUID, ServiceRegistration<?>>();
 
@@ -110,6 +111,18 @@ public class IsyHandlerFactory extends BaseThingHandlerFactory {
                     .addChannelforDeviceId(CHANNEL_KEYPAD_LINC_D, 4).addChannelforDeviceId(CHANNEL_KEYPAD_LINC_E, 5)
                     .addChannelforDeviceId(CHANNEL_KEYPAD_LINC_F, 6).addChannelforDeviceId(CHANNEL_KEYPAD_LINC_G, 7)
                     .addChannelforDeviceId(CHANNEL_KEYPAD_LINC_H, 8).build();
+        } else if (thingTypeUID.equals(SMOKE_DETECTOR_THING_TYPE)) {
+            return IsyHandlerBuilder.builder(thing).addChannelforDeviceId(CHANNEL_SMOKEDETECT_SMOKE, 1)
+                    .addChannelforDeviceId(CHANNEL_SMOKEDETECT_CO, 2).addChannelforDeviceId(CHANNEL_SMOKEDETECT_TEST, 3)
+                    .addChannelforDeviceId(CHANNEL_SMOKEDETECT_UNKNOWNMESSAGE, 4)
+                    .addChannelforDeviceId(CHANNEL_SMOKEDETECT_CLEAR, 5)
+                    .addChannelforDeviceId(CHANNEL_SMOKEDETECT_LOWBAT, 6)
+                    .addChannelforDeviceId(CHANNEL_SMOKEDETECT_MALFUNCTION, 7).build();
+        } else if (thingTypeUID.equals(VENSTAR_THERMOSTAT_THING_TYPE)) {
+            return new VenstarThermostatDeviceHandler(thing);
+        } else if (thingTypeUID.equals(EZX10_RF_THING_TYPE)) {
+            return IsyHandlerBuilder.builder(thing).addChannelforDeviceId(CHANNEL_SWITCH, 1)
+                    .addChannelforDeviceId(CHANNEL_SWITCH, 2).build();
         } else if (thingTypeUID.equals(THING_TYPE_ISYBRIDGE)) {
             IsyBridgeHandler handler = new IsyBridgeHandler((Bridge) thing);
             registerIsyBridgeDiscoveryService(handler);

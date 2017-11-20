@@ -34,7 +34,7 @@ import org.slf4j.LoggerFactory;
  */
 public class IsyDeviceHandler extends AbtractIsyThingHandler {
 
-    protected Logger logger = LoggerFactory.getLogger(IsyDeviceHandler.class);
+    protected Logger logger;
 
     protected Map<Integer, String> mDeviceidToChannelMap = new HashMap<Integer, String>();
 
@@ -89,6 +89,7 @@ public class IsyDeviceHandler extends AbtractIsyThingHandler {
 
     protected IsyDeviceHandler(Thing thing) {
         super(thing);
+        this.logger = LoggerFactory.getLogger(this.getClass());
     }
 
     @Override
