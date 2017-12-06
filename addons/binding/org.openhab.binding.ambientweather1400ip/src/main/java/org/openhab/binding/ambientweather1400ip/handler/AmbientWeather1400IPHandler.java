@@ -49,18 +49,73 @@ import org.slf4j.LoggerFactory;
  */
 public class AmbientWeather1400IPHandler extends BaseThingHandler {
 
-    private static String livedata = "/livedata.htm";
+    class UpdateHandler {
+        private AmbientWeather1400IPHandler handler;
+        private Channel channel;
+        private String currentState = "";
+        private final ArrayList<Class<? extends State>> acceptedDataTypes = new ArrayList<Class<? extends State>>();
 
+        UpdateHandler(AmbientWeather1400IPHandler handler, Channel channel, Class<? extends State> acceptedType) {
+            super();
+            this.handler = handler;
+            this.channel = channel;
+            acceptedDataTypes.add(acceptedType);
+        }
+
+        @SuppressWarnings("null")
+        public void processMessage(String message) {
+            String value = message.toUpperCase();
+            // only if there was a real change
+            if (value.equalsIgnoreCase(this.currentState) == false) {
+                this.currentState = value;
+                State state = TypeParser.parseState(this.acceptedDataTypes, value);
+                this.handler.updateState(this.channel.getUID(), state);
+            }
+        }
+    }
+
+    private static String livedata = "/livedata.htm";
     private final Logger logger = LoggerFactory.getLogger(AmbientWeather1400IPHandler.class);
     private String hostname = "";
     private Map<String, UpdateHandler> updateHandlers;
     private Map<String, String> inputMapper;
+
     private ScheduledFuture<?> poller;
 
     public AmbientWeather1400IPHandler(Thing thing) {
         super(thing);
         this.updateHandlers = new HashMap<String, UpdateHandler>();
         this.inputMapper = new HashMap<String, String>();
+    }
+
+    @SuppressWarnings("null")
+    private String callWebUpdate() throws IOException {
+
+        String urlStr = "http://" + this.hostname + livedata;
+        URL url = new URL(urlStr);
+        URLConnection connection = url.openConnection();
+        try {
+            String response = IOUtils.toString(connection.getInputStream());
+            logger.trace("AWS response = {}", response);
+            return response;
+        } finally {
+            IOUtils.closeQuietly(connection.getInputStream());
+        }
+    }
+
+    private void createChannel(String chanName, Class<? extends State> type, String htmlName) {
+        Channel channel = this.getThing().getChannel(chanName);
+        assert channel != null;
+        this.updateHandlers.put(chanName, new UpdateHandler(this, channel, type));
+        this.inputMapper.put(htmlName, chanName);
+    }
+
+    @Override
+    public void dispose() {
+        if (this.poller != null) {
+            this.poller.cancel(true);
+        }
+        super.dispose();
     }
 
     @Override
@@ -137,21 +192,6 @@ public class AmbientWeather1400IPHandler extends BaseThingHandler {
     }
 
     @SuppressWarnings("null")
-    private String callWebUpdate() throws IOException {
-
-        String urlStr = "http://" + this.hostname + livedata;
-        URL url = new URL(urlStr);
-        URLConnection connection = url.openConnection();
-        try {
-            String response = IOUtils.toString(connection.getInputStream());
-            logger.trace("AWS response = {}", response);
-            return response;
-        } finally {
-            IOUtils.closeQuietly(connection.getInputStream());
-        }
-    }
-
-    @SuppressWarnings("null")
     private void parseAndUpdate(String html) {
 
         Document doc = Jsoup.parse(html);
@@ -168,46 +208,6 @@ public class AmbientWeather1400IPHandler extends BaseThingHandler {
                 this.updateHandlers.get(channelName).processMessage(value);
             } else {
                 logger.trace("no channel found for input element {} ", elementName);
-            }
-        }
-    }
-
-    @Override
-    public void dispose() {
-        if (this.poller != null) {
-            this.poller.cancel(true);
-        }
-        super.dispose();
-    }
-
-    private void createChannel(String chanName, Class<? extends State> type, String htmlName) {
-        Channel channel = this.getThing().getChannel(chanName);
-        assert channel != null;
-        this.updateHandlers.put(chanName, new UpdateHandler(this, channel, type));
-        this.inputMapper.put(htmlName, chanName);
-    }
-
-    class UpdateHandler {
-        private AmbientWeather1400IPHandler handler;
-        private Channel channel;
-        private String currentState = "";
-        private final ArrayList<Class<? extends State>> acceptedDataTypes = new ArrayList<Class<? extends State>>();
-
-        UpdateHandler(AmbientWeather1400IPHandler handler, Channel channel, Class<? extends State> acceptedType) {
-            super();
-            this.handler = handler;
-            this.channel = channel;
-            acceptedDataTypes.add(acceptedType);
-        }
-
-        @SuppressWarnings("null")
-        public void processMessage(String message) {
-            String value = message.toUpperCase();
-            // only if there was a real change
-            if (value.equalsIgnoreCase(this.currentState) == false) {
-                this.currentState = value;
-                State state = TypeParser.parseState(this.acceptedDataTypes, value);
-                this.handler.updateState(this.channel.getUID(), state);
             }
         }
     }

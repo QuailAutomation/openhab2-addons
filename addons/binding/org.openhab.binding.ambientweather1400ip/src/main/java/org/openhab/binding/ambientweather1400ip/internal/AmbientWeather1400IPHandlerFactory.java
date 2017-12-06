@@ -41,11 +41,6 @@ public class AmbientWeather1400IPHandlerFactory extends BaseThingHandlerFactory 
             .singleton(THING_TYPE_AMBIENTWEATHER1400IP);
 
     @Override
-    public boolean supportsThingType(ThingTypeUID thingTypeUID) {
-        return SUPPORTED_THING_TYPES_UIDS.contains(thingTypeUID);
-    }
-
-    @Override
     protected @Nullable ThingHandler createHandler(Thing thing) {
         ThingTypeUID thingTypeUID = thing.getThingTypeUID();
 
@@ -53,5 +48,10 @@ public class AmbientWeather1400IPHandlerFactory extends BaseThingHandlerFactory 
             return new AmbientWeather1400IPHandler(thing);
         }
         return null;
+    }
+
+    @Override
+    public boolean supportsThingType(ThingTypeUID thingTypeUID) {
+        return SUPPORTED_THING_TYPES_UIDS.contains(thingTypeUID);
     }
 }
