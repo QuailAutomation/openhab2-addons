@@ -102,7 +102,9 @@ public class AmbientWeather1400IPHandler extends BaseThingHandler {
         this.createChannel(MONTHLY_RAIN, DecimalType.class, "rainofmonthly");
         this.createChannel(YEARLY_RAIN, DecimalType.class, "rainofyearly");
 
-        // updateStatus(ThingStatus.ONLINE);
+        // stay offline, the poller will figure the right state in a sec...
+        this.updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.CONFIGURATION_PENDING,
+                "Contacting weather station...");
 
         // create a poller task that polls the web page
         Runnable task = new Runnable() {
@@ -131,7 +133,7 @@ public class AmbientWeather1400IPHandler extends BaseThingHandler {
             }
         };
 
-        this.poller = this.scheduler.scheduleWithFixedDelay(task, 1, 30, TimeUnit.SECONDS);
+        this.poller = this.scheduler.scheduleWithFixedDelay(task, 10, 30, TimeUnit.SECONDS);
     }
 
     @SuppressWarnings("null")
