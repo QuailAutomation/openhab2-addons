@@ -77,13 +77,9 @@ public class AmbientWeather1400IPHandler extends BaseThingHandler {
         }
 
         this.hostname = (String) getThing().getConfiguration().get("hostname");
-
-        // test balloon to see if that hostname is close to being correct
-        try {
-            this.callWebUpdate();
-        } catch (IOException e) {
-            String msg = "Unable to reach weather station at '" + this.hostname
-                    + ", please check if configuration is correct";
+        // basic sanity
+        if (this.hostname == null || this.hostname.equals("")) {
+            String msg = "Invalid hostname '" + this.hostname + ", please check configuration";
             updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.CONFIGURATION_ERROR, msg);
             return;
         }
@@ -126,8 +122,8 @@ public class AmbientWeather1400IPHandler extends BaseThingHandler {
                     logger.error(e.getLocalizedMessage());
                     // make thing go offline if the weather station isn't reachable
                     if (!getThing().getStatus().equals(ThingStatus.OFFLINE)) {
-                        String msg = "Unable to reach weather station at '" + hostname
-                                + ", please check that the hostname/ip is correct or if there is problems reaching the station. Detailed error: '";
+                        String msg = "Unable to reach '" + hostname
+                                + "', please check that the 'hostname/ip' setting is correct, or if there is a network problem. Detailed error: '";
                         msg += e.getLocalizedMessage() + "'";
                         updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.COMMUNICATION_ERROR, msg);
                     }
