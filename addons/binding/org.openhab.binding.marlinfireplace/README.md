@@ -7,8 +7,7 @@ This is the binding for a home-grown Fireplace controller, which is based on Ras
 Just supports the fireplace thing, which has current temperature read, fireplace mode read/set, set temp read/set and actuator read (fireplace on/off). The fireplace mode has to be in mode ''WEB'' in order for the set point to be accepted.
 
 ## Discovery
-This needs a configured MQTT service for discovery to work.
-
+No discovery supported, manual configuration required. Configuration is done via paper UI. This needs a configured MQTT service to work, typically done via services/mqtt.cfg. See http://docs.openhab.org/addons/bindings/mqtt1/readme.html
 
 ## Thing Configuration
 
