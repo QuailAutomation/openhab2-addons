@@ -13,6 +13,7 @@ import static org.openhab.binding.marlinhottub.MarlinHotTubBindingConstants.*;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.InterruptedIOException;
 import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -32,6 +33,7 @@ import org.eclipse.smarthome.core.thing.Channel;
 import org.eclipse.smarthome.core.thing.ChannelUID;
 import org.eclipse.smarthome.core.thing.Thing;
 import org.eclipse.smarthome.core.thing.ThingStatus;
+import org.eclipse.smarthome.core.thing.ThingStatusDetail;
 import org.eclipse.smarthome.core.thing.binding.BaseThingHandler;
 import org.eclipse.smarthome.core.types.Command;
 import org.eclipse.smarthome.core.types.RefreshType;
@@ -84,13 +86,22 @@ public class MarlinHotTubHandler extends BaseThingHandler {
         // "Could not control device at IP address x.x.x.x");
 
         if (command instanceof RefreshType) {
-
             try {
                 String restResponse = this.callRestUpdate();
                 this.parseAndUpdate(restResponse);
+                if (!getThing().getStatus().equals(ThingStatus.ONLINE)) {
+                    updateStatus(ThingStatus.ONLINE);
+                }
             } catch (Exception e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
+                // e.printStackTrace();
+                logger.error(e.getLocalizedMessage());
+                // make thing go offline if isn't reachable
+                if (!getThing().getStatus().equals(ThingStatus.OFFLINE)) {
+                    String msg = "Unable to reach '" + hostname
+                            + ", please check that the 'hostname/ip' setting is correct, or if there is a network problem. Detailed error: '";
+                    msg += e.getLocalizedMessage() + "'";
+                    updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.COMMUNICATION_ERROR, msg);
+                }
             }
             return;
         }
@@ -126,9 +137,19 @@ public class MarlinHotTubHandler extends BaseThingHandler {
                         message);
                 this.callRestCommand("blower", message);
             }
+            if (!getThing().getStatus().equals(ThingStatus.ONLINE)) {
+                updateStatus(ThingStatus.ONLINE);
+            }
         } catch (Exception e) {
-            // TODO Figure what exceptions we get, and how to handle them
-            e.printStackTrace();
+            // e.printStackTrace();
+            logger.error(e.getLocalizedMessage());
+            // make thing go offline if isn't reachable
+            if (!getThing().getStatus().equals(ThingStatus.OFFLINE)) {
+                String msg = "Unable to reach '" + hostname
+                        + ", please check that the 'hostname/ip' setting is correct, or if there is a network problem. Detailed error: '";
+                msg += e.getLocalizedMessage() + "'";
+                updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.COMMUNICATION_ERROR, msg);
+            }
         }
     }
 
@@ -164,7 +185,7 @@ public class MarlinHotTubHandler extends BaseThingHandler {
     }
 
     @SuppressWarnings("null")
-    private String callRestUpdate() throws IOException {
+    private String callRestUpdate() throws IOException, InterruptedIOException {
 
         String urlStr = this.hostname + restHottub;
         URL url = new URL(urlStr);
@@ -185,15 +206,10 @@ public class MarlinHotTubHandler extends BaseThingHandler {
             Hottub hottub = (Hottub) msg;
 
             this.updateHandlers.get(TEMPERATURE).processMessage(hottub.getTemperature().getValue());
-
             this.updateHandlers.get(SETPOINT).processMessage(hottub.getSetpoint().getValue());
-
             this.updateHandlers.get(PUMP).processMessage(hottub.getPump().getState());
-
             this.updateHandlers.get(BLOWER).processMessage(hottub.getBlower().getState());
-
             this.updateHandlers.get(HEATER).processMessage(hottub.getHeater().getState());
-
         }
     }
 
@@ -201,7 +217,18 @@ public class MarlinHotTubHandler extends BaseThingHandler {
     @Override
     public void initialize() {
 
+        if (this.poller != null) {
+            logger.debug("leftover poller task still running, attempting to cancel");
+            this.poller.cancel(true);
+        }
+
         this.hostname = (String) getThing().getConfiguration().get("hostname");
+        // basic sanity
+        if (this.hostname == null || this.hostname.equals("")) {
+            String msg = "Invalid hostname '" + this.hostname + ", please check configuration";
+            updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.CONFIGURATION_ERROR, msg);
+            return;
+        }
 
         Channel channel;
 
@@ -236,10 +263,23 @@ public class MarlinHotTubHandler extends BaseThingHandler {
             public void run() {
                 try {
                     String restResponse = MarlinHotTubHandler.this.callRestUpdate();
+                    // in case we come back from an outage -> set status online
+                    if (!getThing().getStatus().equals(ThingStatus.ONLINE)) {
+                        updateStatus(ThingStatus.ONLINE);
+                    }
                     MarlinHotTubHandler.this.parseAndUpdate(restResponse);
+                } catch (InterruptedIOException ie) {
+                    return;
                 } catch (Exception e) {
-                    // TODO figure out what exceptions we get, and what to do about them
-                    e.printStackTrace();
+                    // e.printStackTrace();
+                    logger.error(e.getLocalizedMessage());
+                    // make thing go offline if the weather station isn't reachable
+                    if (!getThing().getStatus().equals(ThingStatus.OFFLINE)) {
+                        String msg = "Unable to reach '" + hostname
+                                + ", please check that the 'hostname/ip' setting is correct, or if there is a network problem. Detailed error: '";
+                        msg += e.getLocalizedMessage() + "'";
+                        updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.COMMUNICATION_ERROR, msg);
+                    }
                 }
             }
         };
