@@ -97,5 +97,6 @@
     <module>org.openhab.binding.zoneminder</module>
     <module>org.openhab.binding.zway</module>
     <module>org.openhab.binding.marlinhottub</module>
+    <module>org.openhab.binding.ambientweather1400ip</module>
   </modules>
 </project>
