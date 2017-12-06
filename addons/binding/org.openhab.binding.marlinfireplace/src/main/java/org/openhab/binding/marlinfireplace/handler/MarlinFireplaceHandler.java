@@ -72,14 +72,16 @@ public class MarlinFireplaceHandler extends BaseThingHandler {
     public void initialize() {
 
         this.brokerName = (String) getThing().getConfiguration().get("mqttbroker");
-        String pubTopicPart = (String) getThing().getConfiguration().get("basetopicsend"); // 'out' topic
-        String subTopicPart = (String) getThing().getConfiguration().get("basetopicreceive"); // 'in' topic
+        String pubTopicPart = (String) getThing().getConfiguration().get("basetopic"); // 'out' topic
+        String subTopicPart = (String) getThing().getConfiguration().get("basetopic"); // 'in' topic
         if (pubTopicPart.endsWith("/")) {
             pubTopicPart = pubTopicPart.substring(0, pubTopicPart.length() - 1);
         }
         if (subTopicPart.endsWith("/")) {
             subTopicPart = subTopicPart.substring(0, subTopicPart.length() - 1);
         }
+        pubTopicPart = pubTopicPart + "/in/web";
+        subTopicPart = subTopicPart + "/out/web";
 
         if (this.mqttService == null) {
             this.logger.error("No MQTT service yet?");

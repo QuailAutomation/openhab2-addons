@@ -13,8 +13,7 @@ No discovery supported, manual configuration required. Configuration is done via
 
 Required config:
 * mqtt broker name: needs the name of the configured mqtt service to be used. Typically done via services/mqtt.cfg
-* Base Topic to Receive: the mqtt base topic the fireplace sends information out on, i.e. ''/fireplace/out/web''
-* Base Topic to Send: the mqtt base topic the fireplace receives commands on, i.e. ''/fireplace/in/web''
+* Base Topic: the mqtt base topic the fireplace sends/receives information on, i.e. ''/fireplace''
 
 ## Channels
 * ''temperature'': current temperature, (number - read-only)

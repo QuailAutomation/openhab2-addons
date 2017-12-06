@@ -22,13 +22,9 @@
                 <label>MQTT broker name</label>
                 <description>the MQTT service/broker to use for connecting to the fireplace (OpenHAB name)</description>
             </parameter>
-            <parameter name="basetopicreceive" type="text" required="true">
-                <label>Base Topic to Receive</label>
-                <description>The base topic where the fireplace publishes state updates (and we're receiving on)</description>
-            </parameter>
-            <parameter name="basetopicsend" type="text" required="true">
-                <label>Base Topic to Send</label>
-                <description>The base topic where the fireplace subscribes to commands/state changes (and we're sending on)</description>
+            <parameter name="basetopic" type="text" required="true">
+                <label>Base Topic</label>
+                <description>The base topic where the fireplace publishes/subscribes to</description>
             </parameter>
         </config-description>
 
