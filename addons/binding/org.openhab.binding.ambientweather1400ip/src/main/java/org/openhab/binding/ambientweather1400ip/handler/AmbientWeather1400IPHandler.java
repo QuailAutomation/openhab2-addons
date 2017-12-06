@@ -29,6 +29,7 @@ import org.eclipse.smarthome.core.thing.Channel;
 import org.eclipse.smarthome.core.thing.ChannelUID;
 import org.eclipse.smarthome.core.thing.Thing;
 import org.eclipse.smarthome.core.thing.ThingStatus;
+import org.eclipse.smarthome.core.thing.ThingStatusDetail;
 import org.eclipse.smarthome.core.thing.binding.BaseThingHandler;
 import org.eclipse.smarthome.core.types.Command;
 import org.eclipse.smarthome.core.types.State;
@@ -64,13 +65,28 @@ public class AmbientWeather1400IPHandler extends BaseThingHandler {
 
     @Override
     public void handleCommand(ChannelUID channelUID, Command command) {
-        // no commands to handle
+        // TODO: handle refresh? We're polling anyway, and the 1st update comes after 1 second...
     }
 
     @Override
     public void initialize() {
 
+        if (this.poller != null) {
+            logger.debug("leftover poller task still running, attempting to cancel");
+            this.poller.cancel(true);
+        }
+
         this.hostname = (String) getThing().getConfiguration().get("hostname");
+
+        // test balloon to see if that hostname is close to being correct
+        try {
+            this.callWebUpdate();
+        } catch (IOException e) {
+            String msg = "Unable to reach weather station at '" + this.hostname
+                    + ", please check if configuration is correct";
+            updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.CONFIGURATION_ERROR, msg);
+            return;
+        }
 
         this.createChannel(INDOOR_TEMP, DecimalType.class, "inTemp");
         this.createChannel(OUTDOOR_TEMP, DecimalType.class, "outTemp");
@@ -90,21 +106,31 @@ public class AmbientWeather1400IPHandler extends BaseThingHandler {
         this.createChannel(MONTHLY_RAIN, DecimalType.class, "rainofmonthly");
         this.createChannel(YEARLY_RAIN, DecimalType.class, "rainofyearly");
 
-        // TODO: Initialize the thing. If done set status to ONLINE to indicate proper working.
-        // Long running initialization should be done asynchronously in background.
-        updateStatus(ThingStatus.ONLINE);
+        // updateStatus(ThingStatus.ONLINE);
 
-        // create a poller task that polls the REST interface
+        // create a poller task that polls the web page
         Runnable task = new Runnable() {
 
             @Override
             public void run() {
                 try {
                     String webResponse = AmbientWeather1400IPHandler.this.callWebUpdate();
+
+                    // in case we come back from an outage -> set status online
+                    if (!getThing().getStatus().equals(ThingStatus.ONLINE)) {
+                        updateStatus(ThingStatus.ONLINE);
+                    }
                     AmbientWeather1400IPHandler.this.parseAndUpdate(webResponse);
                 } catch (Exception e) {
-                    // TODO figure out what exceptions we get, and what to do about them
-                    e.printStackTrace();
+                    // e.printStackTrace();
+                    logger.error(e.getLocalizedMessage());
+                    // make thing go offline if the weather station isn't reachable
+                    if (!getThing().getStatus().equals(ThingStatus.OFFLINE)) {
+                        String msg = "Unable to reach weather station at '" + hostname
+                                + ", please check that the hostname/ip is correct or if there is problems reaching the station. Detailed error: '";
+                        msg += e.getLocalizedMessage() + "'";
+                        updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.COMMUNICATION_ERROR, msg);
+                    }
                 }
             }
         };
