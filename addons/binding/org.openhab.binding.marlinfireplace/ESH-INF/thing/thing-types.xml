@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<thing:thing-descriptions bindingId="marlinfireplace"
+						  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+						  xmlns:thing="http://eclipse.org/smarthome/schemas/thing-description/v1.0.0"
+						  xsi:schemaLocation="http://eclipse.org/smarthome/schemas/thing-description/v1.0.0 http://eclipse.org/smarthome/schemas/thing-description-1.0.0.xsd">
+
+	<!-- Fireplace Thing Type -->
+	<thing-type id="fireplace">
+		<label>Marlin Fireplace</label>
+		<description>Marlin Fireplace via MQTT</description>
+
+		<channels>
+            <channel id="temperature" typeId="fireplace_temp_chan"/>
+            <channel id="setpoint" typeId="fireplace_setpoint_chan"/>
+            <channel id="mode" typeId="fireplace_mode_chan"/>
+            <channel id="state" typeId="switch_state"/>
+		</channels>
+
+        <config-description>
+            <parameter name="mqttbroker" type="text" required="true">
+                <context>network-address</context>
+                <label>MQTT broker name</label>
+                <description>the MQTT service/broker to use for connecting to the fireplace (OpenHAB name)</description>
+            </parameter>
+            <parameter name="basetopicreceive" type="text" required="true">
+                <label>Base Topic to Receive</label>
+                <description>The base topic where the fireplace publishes state updates (and we're receiving on)</description>
+            </parameter>
+            <parameter name="basetopicsend" type="text" required="true">
+                <label>Base Topic to Send</label>
+                <description>The base topic where the fireplace subscribes to commands/state changes (and we're sending on)</description>
+            </parameter>
+        </config-description>
+
+	</thing-type>
+
+    <channel-type id="fireplace_temp_chan">
+        <item-type>Number</item-type>
+        <label>Temperature</label>
+        <description>Current Temperature</description>
+        <category>Thermostat</category>
+        <state pattern="%.1f °F" readOnly="true"/>
+    </channel-type>
+    <channel-type id="fireplace_setpoint_chan">
+        <item-type>Number</item-type>
+        <label>Setpoint</label>
+        <description>Setpoint</description>
+        <category>Thermostat</category>
+        <state pattern="%.1f °F" readOnly="false"/>
+    </channel-type>
+    <channel-type id="fireplace_mode_chan">
+        <item-type>String</item-type>
+        <label>Mode</label>
+        <description>Mode Setting</description>
+        <category>Thermostat</category>
+        <state pattern="%s" readOnly="false">
+             <options>
+                <option value="OFF">OFF</option>
+                <option value="ON">ON</option>
+                <option value="LOCAL">LOCAL</option>
+                <option value="REMOTE">REMOTE</option>
+                <option value="WEB">WEB</option>
+            </options>
+         </state>
+    </channel-type>
+    <channel-type id="switch_state">
+        <item-type>Switch</item-type>
+        <label>Off/On</label>
+        <description>On/off status of the switch</description>
+        <category>Switch</category>
+        <state readOnly="true" />
+    </channel-type>
+</thing:thing-descriptions>
