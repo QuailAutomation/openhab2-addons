@@ -6,12 +6,18 @@
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  */
-package org.openhab.binding.russound.rnet.internal.connection;
+package org.openhab.binding.russound.internal.rnet.connection;
 
 import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
 
+/**
+ * Represents something which can provide a connection with in/out streams
+ *
+ * @author Craig Hamilton
+ *
+ */
 public interface ConnectionProvider {
 
     public ObjectOutputStream getOutputStream();

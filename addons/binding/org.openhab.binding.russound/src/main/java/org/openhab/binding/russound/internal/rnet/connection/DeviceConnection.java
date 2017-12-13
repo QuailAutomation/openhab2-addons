@@ -6,13 +6,13 @@
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  */
-package org.openhab.binding.russound.rnet.internal.connection;
+package org.openhab.binding.russound.internal.rnet.connection;
 
 import java.io.IOException;
 import java.net.SocketTimeoutException;
 import java.util.Arrays;
 
-import org.openhab.binding.russound.rnet.internal.StringHexUtils;
+import org.openhab.binding.russound.internal.rnet.StringHexUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

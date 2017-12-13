@@ -6,7 +6,7 @@
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  */
-package org.openhab.binding.russound.rnet.handler;
+package org.openhab.binding.russound.internal.rnet.handler;
 
 import java.util.Arrays;
 import java.util.HashSet;
@@ -29,25 +29,25 @@ import org.eclipse.smarthome.core.thing.binding.BaseBridgeHandler;
 import org.eclipse.smarthome.core.types.Command;
 import org.eclipse.smarthome.core.types.RefreshType;
 import org.openhab.binding.russound.internal.net.SocketSession;
-import org.openhab.binding.russound.rnet.internal.BusParser;
-import org.openhab.binding.russound.rnet.internal.PowerChangeParser;
-import org.openhab.binding.russound.rnet.internal.RNetConstants;
-import org.openhab.binding.russound.rnet.internal.RNetProtocolCommands;
-import org.openhab.binding.russound.rnet.internal.RNetProtocolCommands.ZoneCommand;
-import org.openhab.binding.russound.rnet.internal.RNetSystemConfig;
-import org.openhab.binding.russound.rnet.internal.SourceChangeParser;
-import org.openhab.binding.russound.rnet.internal.VolumeChangeParser;
-import org.openhab.binding.russound.rnet.internal.ZoneId;
-import org.openhab.binding.russound.rnet.internal.ZoneInfoParser;
-import org.openhab.binding.russound.rnet.internal.ZoneStateUpdate;
-import org.openhab.binding.russound.rnet.internal.connection.ConnectionProvider;
-import org.openhab.binding.russound.rnet.internal.connection.ConnectionStateListener;
-import org.openhab.binding.russound.rnet.internal.connection.DeviceConnection;
-import org.openhab.binding.russound.rnet.internal.connection.InputHander;
-import org.openhab.binding.russound.rnet.internal.connection.NoConnectionException;
-import org.openhab.binding.russound.rnet.internal.connection.RNetInputStreamParser;
-import org.openhab.binding.russound.rnet.internal.connection.SerialConnectionProvider;
-import org.openhab.binding.russound.rnet.internal.connection.TcpConnectionProvider;
+import org.openhab.binding.russound.internal.rnet.BusParser;
+import org.openhab.binding.russound.internal.rnet.PowerChangeParser;
+import org.openhab.binding.russound.internal.rnet.RNetConstants;
+import org.openhab.binding.russound.internal.rnet.RNetProtocolCommands;
+import org.openhab.binding.russound.internal.rnet.RNetSystemConfig;
+import org.openhab.binding.russound.internal.rnet.SourceChangeParser;
+import org.openhab.binding.russound.internal.rnet.VolumeChangeParser;
+import org.openhab.binding.russound.internal.rnet.ZoneId;
+import org.openhab.binding.russound.internal.rnet.ZoneInfoParser;
+import org.openhab.binding.russound.internal.rnet.ZoneStateUpdate;
+import org.openhab.binding.russound.internal.rnet.RNetProtocolCommands.ZoneCommand;
+import org.openhab.binding.russound.internal.rnet.connection.ConnectionProvider;
+import org.openhab.binding.russound.internal.rnet.connection.ConnectionStateListener;
+import org.openhab.binding.russound.internal.rnet.connection.DeviceConnection;
+import org.openhab.binding.russound.internal.rnet.connection.InputHander;
+import org.openhab.binding.russound.internal.rnet.connection.NoConnectionException;
+import org.openhab.binding.russound.internal.rnet.connection.RNetInputStreamParser;
+import org.openhab.binding.russound.internal.rnet.connection.SerialConnectionProvider;
+import org.openhab.binding.russound.internal.rnet.connection.TcpConnectionProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

@@ -6,12 +6,18 @@
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  */
-package org.openhab.binding.russound.rnet.internal;
+package org.openhab.binding.russound.internal.rnet;
 
 import org.eclipse.smarthome.core.library.types.OnOffType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * Detects if there has been a change to power for audio zone
+ *
+ * @author Craig Hamilton
+ *
+ */
 public class PowerChangeParser implements BusParser {
     private final Logger logger = LoggerFactory.getLogger(PowerChangeParser.class);
 

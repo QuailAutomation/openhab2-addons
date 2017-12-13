@@ -6,9 +6,15 @@
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  */
-package org.openhab.binding.russound.rnet.internal.connection;
+package org.openhab.binding.russound.internal.rnet.connection;
 
-public interface InputParser {
-    public void parse(byte[] bytes);
+/**
+ * Represents what is required to be a command provide for Rnet system
+ *
+ * @author Craig Hamilton
+ *
+ */
+public interface CommandProvider {
 
+    public byte[] getCommand();
 }

@@ -6,9 +6,15 @@
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  */
-package org.openhab.binding.russound.rnet.internal.connection;
+package org.openhab.binding.russound.internal.rnet.connection;
 
-public interface ConnectionStateListener {
+/**
+ * Represents something which can process rnet messages
+ *
+ * @author Craig Hamilton
+ *
+ */
+public interface InputParser {
+    public void parse(byte[] bytes);
 
-    public void isConnected(boolean value);
 }

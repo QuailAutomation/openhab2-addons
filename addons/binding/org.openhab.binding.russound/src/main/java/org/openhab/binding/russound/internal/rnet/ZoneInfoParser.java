@@ -6,7 +6,7 @@
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  */
-package org.openhab.binding.russound.rnet.internal;
+package org.openhab.binding.russound.internal.rnet;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -17,6 +17,12 @@ import org.eclipse.smarthome.core.library.types.PercentType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * Detect the generic zone info messages on RNet bus and update the various channels
+ *
+ * @author Craig Hamilton
+ *
+ */
 public class ZoneInfoParser implements BusParser {
     private final Logger logger = LoggerFactory.getLogger(ZoneInfoParser.class);
 

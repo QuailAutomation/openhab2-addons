@@ -14,9 +14,9 @@ import java.util.Map;
 import org.eclipse.smarthome.config.discovery.AbstractDiscoveryService;
 import org.eclipse.smarthome.config.discovery.DiscoveryResultBuilder;
 import org.eclipse.smarthome.core.thing.ThingUID;
-import org.openhab.binding.russound.rnet.handler.RNetSystemHandler;
-import org.openhab.binding.russound.rnet.internal.RNetConstants;
-import org.openhab.binding.russound.rnet.internal.RNetSystemConfig;
+import org.openhab.binding.russound.internal.rnet.RNetConstants;
+import org.openhab.binding.russound.internal.rnet.RNetSystemConfig;
+import org.openhab.binding.russound.internal.rnet.handler.RNetSystemHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

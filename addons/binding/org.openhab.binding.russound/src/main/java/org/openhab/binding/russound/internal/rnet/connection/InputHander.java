@@ -6,12 +6,14 @@
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  */
-package org.openhab.binding.russound.rnet.internal;
+package org.openhab.binding.russound.internal.rnet.connection;
 
-public interface BusParser {
-
-    public boolean matches(Byte[] bytes);
-
-    public ZoneStateUpdate process(Byte[] bytes);
-
+/**
+ * The interface for handlers which expect a byte array
+ *
+ * @author Craig Hamilton
+ *
+ */
+public interface InputHander {
+    public void handle(Byte[] bytes);
 }

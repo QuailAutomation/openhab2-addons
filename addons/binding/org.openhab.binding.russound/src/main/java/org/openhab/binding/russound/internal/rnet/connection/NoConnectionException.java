@@ -6,8 +6,14 @@
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  */
-package org.openhab.binding.russound.rnet.internal.connection;
+package org.openhab.binding.russound.internal.rnet.connection;
 
+/**
+ * Represents there is no current connection to the rnet system
+ *
+ * @author Craig Hamilton
+ *
+ */
 public class NoConnectionException extends Exception {
 
     public NoConnectionException(String string) {

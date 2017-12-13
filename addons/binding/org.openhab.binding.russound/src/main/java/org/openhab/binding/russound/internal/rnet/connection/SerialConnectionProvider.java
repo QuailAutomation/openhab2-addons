@@ -14,7 +14,7 @@
      * which accompanies this distribution, and is available at
      * http://www.eclipse.org/legal/epl-v10.html
      */
-package org.openhab.binding.russound.rnet.internal.connection;
+package org.openhab.binding.russound.internal.rnet.connection;
 
 import java.io.DataInputStream;
 import java.io.IOException;

@@ -6,8 +6,15 @@
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  */
-package org.openhab.binding.russound.rnet.internal;
+package org.openhab.binding.russound.internal.rnet.connection;
 
-public interface RNetCommand {
-    public Byte[] getCommand(ZoneId zoneId, byte value);
+/**
+ * Listener for connection events to rnet bus
+ *
+ * @author Craig Hamilton
+ *
+ */
+public interface ConnectionStateListener {
+
+    public void isConnected(boolean value);
 }

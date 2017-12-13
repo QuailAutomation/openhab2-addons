@@ -6,17 +6,23 @@
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  */
-package org.openhab.binding.russound.rnet.internal.connection;
+package org.openhab.binding.russound.internal.rnet.connection;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 import org.apache.commons.lang.ArrayUtils;
-import org.openhab.binding.russound.rnet.internal.StringHexUtils;
+import org.openhab.binding.russound.internal.rnet.StringHexUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * Responsible for watching for valid RNet messages and then passing them to the binding
+ *
+ * @author Craig Hamilton
+ *
+ */
 public class RNetInputStreamParser implements InputParser {
     private Logger logger = LoggerFactory.getLogger(RNetInputStreamParser.class);
     byte[] partialBytes = new byte[1000];

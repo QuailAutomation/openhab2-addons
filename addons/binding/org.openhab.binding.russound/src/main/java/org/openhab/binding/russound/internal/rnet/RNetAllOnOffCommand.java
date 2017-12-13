@@ -6,13 +6,19 @@
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  */
-package org.openhab.binding.russound.rnet.internal;
+package org.openhab.binding.russound.internal.rnet;
 
 import java.util.Arrays;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * Creates a byte string to turn all zones on or off
+ *
+ * @author Craig Hamilton
+ *
+ */
 public class RNetAllOnOffCommand implements RNetCommand {
     private final Logger logger = LoggerFactory.getLogger(RNetAllOnOffCommand.class);
     private static Byte[] allOffBytes = new Byte[] { (byte) 0xf0, (byte) 0x7e, (byte) 0x00, (byte) 0x7f, (byte) 0x00,

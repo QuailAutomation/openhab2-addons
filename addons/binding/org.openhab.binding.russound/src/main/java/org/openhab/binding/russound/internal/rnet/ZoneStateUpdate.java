@@ -6,7 +6,7 @@
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  */
-package org.openhab.binding.russound.rnet.internal;
+package org.openhab.binding.russound.internal.rnet;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -16,7 +16,7 @@ import org.eclipse.smarthome.core.types.State;
 /**
  * Represents a collection of attribute changes for a zone.
  *
- * @author craigh
+ * @author Craig Hamilton
  *
  */
 public class ZoneStateUpdate {

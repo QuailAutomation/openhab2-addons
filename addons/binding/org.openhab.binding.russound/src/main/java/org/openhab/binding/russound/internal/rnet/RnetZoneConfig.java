@@ -6,8 +6,14 @@
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  */
-package org.openhab.binding.russound.rnet.internal;
+package org.openhab.binding.russound.internal.rnet;
 
+/**
+ * Config info for Rnet Audio Zone
+ * 
+ * @author Craig Hamilton
+ *
+ */
 public class RnetZoneConfig {
     private int controller;
     private int zone;

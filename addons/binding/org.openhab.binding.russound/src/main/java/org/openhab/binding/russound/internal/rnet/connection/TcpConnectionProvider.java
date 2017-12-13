@@ -6,7 +6,7 @@
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  */
-package org.openhab.binding.russound.rnet.internal.connection;
+package org.openhab.binding.russound.internal.rnet.connection;
 
 import java.io.DataInputStream;
 import java.io.IOException;
@@ -19,6 +19,12 @@ import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * This provides a tcp connection.
+ *
+ * @author Craig Hamilton
+ *
+ */
 public class TcpConnectionProvider implements ConnectionProvider {
 
     private final Logger logger = LoggerFactory.getLogger(TcpConnectionProvider.class);
@@ -95,7 +101,7 @@ public class TcpConnectionProvider implements ConnectionProvider {
             } catch (UnknownHostException unknownHost) {
                 logger.error("You are trying to connect to an unknown host!", unknownHost);
             } catch (IOException ioException) {
-                logger.error("Can't connect: " + ioException.getMessage());
+                logger.error("Can't connect: ", ioException.getMessage());
             }
         }
 

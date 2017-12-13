@@ -6,18 +6,30 @@
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  */
-package org.openhab.binding.russound.rnet.internal;
+package org.openhab.binding.russound.internal.rnet;
 
 import java.util.Arrays;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * Provide mapping between ZoneCommands and their RNet byte representation
+ *
+ * @author Craig Hamilton
+ *
+ */
 public class RNetProtocolCommands implements RNetCommand {
     private static Logger logger = LoggerFactory.getLogger(RNetProtocolCommands.class);
     private static final int NO_VALUE_NEEDED = -33;
     public static final byte NO_VALUE = (byte) 0xFF;
 
+    /**
+     * Currently supported Rnet Commands
+     *
+     * @author Craig Hamilton
+     *
+     */
     public enum ZoneCommand {
         VOLUME_SET,
         POWER_SET,

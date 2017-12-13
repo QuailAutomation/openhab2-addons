@@ -6,7 +6,7 @@
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  */
-package org.openhab.binding.russound.rnet.handler;
+package org.openhab.binding.russound.internal.rnet.handler;
 
 import java.util.Collection;
 import java.util.concurrent.Callable;
@@ -24,12 +24,12 @@ import org.eclipse.smarthome.core.thing.binding.ThingHandler;
 import org.eclipse.smarthome.core.types.Command;
 import org.openhab.binding.russound.internal.rio.RioConstants;
 import org.openhab.binding.russound.internal.rio.controller.RioControllerHandler;
-import org.openhab.binding.russound.rnet.internal.ChannelStateUpdate;
-import org.openhab.binding.russound.rnet.internal.RNetConstants;
-import org.openhab.binding.russound.rnet.internal.RNetProtocolCommands;
-import org.openhab.binding.russound.rnet.internal.RNetProtocolCommands.ZoneCommand;
-import org.openhab.binding.russound.rnet.internal.RnetZoneConfig;
-import org.openhab.binding.russound.rnet.internal.ZoneId;
+import org.openhab.binding.russound.internal.rnet.ChannelStateUpdate;
+import org.openhab.binding.russound.internal.rnet.RNetConstants;
+import org.openhab.binding.russound.internal.rnet.RNetProtocolCommands;
+import org.openhab.binding.russound.internal.rnet.RnetZoneConfig;
+import org.openhab.binding.russound.internal.rnet.ZoneId;
+import org.openhab.binding.russound.internal.rnet.RNetProtocolCommands.ZoneCommand;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

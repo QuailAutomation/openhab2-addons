@@ -6,10 +6,16 @@
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  */
-package org.openhab.binding.russound.rnet.internal;
+package org.openhab.binding.russound.internal.rnet;
 
 import org.eclipse.smarthome.core.types.State;
 
+/**
+ * Represents a desired change for channel
+ *
+ * @author Craig Hamilton
+ *
+ */
 public class ChannelStateUpdate {
 
     private String channel;

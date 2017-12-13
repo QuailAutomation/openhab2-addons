@@ -6,7 +6,7 @@
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  */
-package org.openhab.binding.russound.rnet.internal;
+package org.openhab.binding.russound.internal.rnet;
 
 import java.util.Set;
 
@@ -15,6 +15,12 @@ import org.openhab.binding.russound.RussoundBindingConstants;
 
 import com.google.common.collect.ImmutableSet;
 
+/**
+ * Constants used for RNet support
+ * 
+ * @author Craig Hamilton
+ *
+ */
 public class RNetConstants {
 
     public final static ThingTypeUID BRIDGE_TYPE_RNET = new ThingTypeUID(RussoundBindingConstants.BINDING_ID, "rnet");

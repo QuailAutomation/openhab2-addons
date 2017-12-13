@@ -6,9 +6,18 @@
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  */
-package org.openhab.binding.russound.rnet.internal.connection;
+package org.openhab.binding.russound.internal.rnet;
 
-public interface CommandProvider {
+/**
+ * Responsible for converting rnet messages into openhab commands if zone id and message format matches
+ *
+ * @author Craig Hamilton
+ *
+ */
+public interface BusParser {
 
-    public byte[] getCommand();
+    public boolean matches(Byte[] bytes);
+
+    public ZoneStateUpdate process(Byte[] bytes);
+
 }

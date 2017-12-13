@@ -6,10 +6,16 @@
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  */
-package org.openhab.binding.russound.rnet.internal;
+package org.openhab.binding.russound.internal.rnet;
 
 import org.apache.commons.lang.ArrayUtils;
 
+/**
+ * Utility class for converting bytes to hex string
+ *
+ * @author Craig Hamilton
+ *
+ */
 public class StringHexUtils {
 
     public static String byteArrayToHex(byte[] a) {

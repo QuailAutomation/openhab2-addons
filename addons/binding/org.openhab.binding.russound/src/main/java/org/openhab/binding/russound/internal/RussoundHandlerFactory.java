@@ -23,9 +23,9 @@ import org.openhab.binding.russound.internal.rio.controller.RioControllerHandler
 import org.openhab.binding.russound.internal.rio.source.RioSourceHandler;
 import org.openhab.binding.russound.internal.rio.system.RioSystemHandler;
 import org.openhab.binding.russound.internal.rio.zone.RioZoneHandler;
-import org.openhab.binding.russound.rnet.handler.RNetSystemHandler;
-import org.openhab.binding.russound.rnet.handler.RNetZoneHandler;
-import org.openhab.binding.russound.rnet.internal.RNetConstants;
+import org.openhab.binding.russound.internal.rnet.RNetConstants;
+import org.openhab.binding.russound.internal.rnet.handler.RNetSystemHandler;
+import org.openhab.binding.russound.internal.rnet.handler.RNetZoneHandler;
 import org.openhab.binding.russound.rnet.internal.discovery.RNetSystemDeviceDiscoveryService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
