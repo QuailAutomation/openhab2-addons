@@ -10,6 +10,13 @@ package org.openhab.binding.russound.rnet.net;
 
 import java.io.IOException;
 
+/**
+ * Represents something which can listen for responses on the rnet bus
+ *
+ * @author Craig Hamilton
+ *
+ * @param <T> Byte or String
+ */
 public interface SessionListener<T> {
     /**
      * Called when a command has completed with the response for the command

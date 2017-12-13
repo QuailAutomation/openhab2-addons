@@ -12,6 +12,12 @@ import java.nio.channels.SocketChannel;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.atomic.AtomicReference;
 
+/**
+ * Interface representing something which can read responses for rnet system
+ * 
+ * @author Craig Hamilton
+ *
+ */
 public interface ResponseReader extends Runnable {
 
     void setQueueandChannel(BlockingQueue<Object> responses, AtomicReference<SocketChannel> socketChannel);

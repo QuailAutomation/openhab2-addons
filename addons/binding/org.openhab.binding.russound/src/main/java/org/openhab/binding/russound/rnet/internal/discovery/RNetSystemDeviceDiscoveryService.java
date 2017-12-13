@@ -6,7 +6,7 @@
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  */
-package org.openhab.binding.russound.rnet.discovery;
+package org.openhab.binding.russound.rnet.internal.discovery;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -20,6 +20,12 @@ import org.openhab.binding.russound.rnet.internal.RNetSystemConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * Discovery for RNET devices
+ * 
+ * @author craig hamilton
+ *
+ */
 public class RNetSystemDeviceDiscoveryService extends AbstractDiscoveryService {
     private final Logger logger = LoggerFactory.getLogger(RNetSystemDeviceDiscoveryService.class);
 
