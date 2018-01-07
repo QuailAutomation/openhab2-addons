@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2010-2017 by the respective copyright holders.
+ * Copyright (c) 2010-2018 by the respective copyright holders.
  *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
@@ -183,7 +183,7 @@ public class ZoneMinderServerBridgeHandler extends BaseBridgeHandler implements 
                 }
 
             } catch (Exception exception) {
-                logger.error("{}: monitorRunnable::run(): Exception: {}", getLogIdentifier(), exception);
+                logger.error("{}: monitorRunnable::run(): Exception: ", getLogIdentifier(), exception);
             }
         }
     };
@@ -222,11 +222,11 @@ public class ZoneMinderServerBridgeHandler extends BaseBridgeHandler implements 
                         // pointer exception is coming every now and then.
                         // HAve to find the reason for that. Until thenm, don't Spamm
                         logger.error(
-                                "[MONITOR]: Method 'refreshThing()' for Bridge failed for thing='{}' - Exception='{}'",
+                                "[MONITOR]: Method 'refreshThing()' for Bridge failed for thing='{}' - Exception: ",
                                 thing.getUID(), ex);
                     } catch (Exception ex) {
                         logger.error(
-                                "[MONITOR]: Method 'refreshThing()' for Bridge failed for thing='{}' - Exception='{}'",
+                                "[MONITOR]: Method 'refreshThing()' for Bridge failed for thing='{}' - Exception: ",
                                 thing.getUID(), ex);
                     }
                 }
@@ -447,7 +447,7 @@ public class ZoneMinderServerBridgeHandler extends BaseBridgeHandler implements 
                         zoneMinderServerProxy.getHttpResponseMessage());
 
             } catch (FailedLoginException | ZoneMinderUrlNotFoundException | IOException ex) {
-                logger.error("{}: Exception thrown in call to ZoneMinderHostLoad ('{}')", getLogIdentifier(), ex);
+                logger.error("{}: Exception thrown in call to ZoneMinderHostLoad: ", getLogIdentifier(), ex);
             }
 
             if (hostLoad == null) {
@@ -470,7 +470,7 @@ public class ZoneMinderServerBridgeHandler extends BaseBridgeHandler implements 
                             zoneMinderServerProxy.getHttpUrl(), zoneMinderServerProxy.getHttpResponseCode(),
                             zoneMinderServerProxy.getHttpResponseMessage());
                 } catch (Exception ex) {
-                    logger.error("{}: Exception thrown in call to ZoneMinderDiskUsage ('{}')", getLogIdentifier(), ex);
+                    logger.error("{}: Exception thrown in call to ZoneMinderDiskUsage: ", getLogIdentifier(), ex);
                 }
 
                 if (diskUsage == null) {
@@ -1196,7 +1196,7 @@ public class ZoneMinderServerBridgeHandler extends BaseBridgeHandler implements 
         }
 
         if (update) {
-            logger.info("{}: Properties synchronised", getLogIdentifier(), getThingId());
+            logger.info("{}: Properties synchronised, Thing id: {}", getLogIdentifier(), getThingId());
             updateProperties(properties);
         }
     }
