@@ -32,6 +32,7 @@ import org.eclipse.smarthome.core.thing.ThingStatus;
 import org.eclipse.smarthome.core.thing.ThingStatusDetail;
 import org.eclipse.smarthome.core.thing.binding.BaseThingHandler;
 import org.eclipse.smarthome.core.types.Command;
+import org.eclipse.smarthome.core.types.RefreshType;
 import org.eclipse.smarthome.core.types.State;
 import org.eclipse.smarthome.core.types.TypeParser;
 import org.jsoup.Jsoup;
@@ -80,7 +81,8 @@ public class AmbientWeather1400IPHandler extends BaseThingHandler {
     private Map<String, UpdateHandler> updateHandlers;
     private Map<String, String> inputMapper;
 
-    private ScheduledFuture<?> poller;
+    private ScheduledFuture<?> poller = null;
+    private Runnable updatetask = null;
 
     public AmbientWeather1400IPHandler(Thing thing) {
         super(thing);
@@ -115,12 +117,26 @@ public class AmbientWeather1400IPHandler extends BaseThingHandler {
         if (this.poller != null) {
             this.poller.cancel(true);
         }
+        this.inputMapper.clear();
+        this.updateHandlers.clear();
         super.dispose();
     }
 
     @Override
     public void handleCommand(ChannelUID channelUID, Command command) {
-        // TODO: handle refresh? We're polling anyway, and the 1st update comes after 1 second...
+        // No commands but refresh to handle for this device
+
+        if (command instanceof RefreshType) {
+            // only allow one refresh channel poll
+            // every update updates all channels anyways, so no need to blast the weather station with the
+            // same request
+            // just run the web get + parse task inline, it will do the right thing
+            if (channelUID.getId().equals(OUTDOOR_TEMP)) {
+                if (this.updatetask != null) {
+                    this.updatetask.run();
+                }
+            }
+        }
     }
 
     @Override
@@ -162,7 +178,7 @@ public class AmbientWeather1400IPHandler extends BaseThingHandler {
                 "Contacting weather station...");
 
         // create a poller task that polls the web page
-        Runnable task = new Runnable() {
+        this.updatetask = new Runnable() {
 
             @Override
             public void run() {
@@ -188,7 +204,7 @@ public class AmbientWeather1400IPHandler extends BaseThingHandler {
             }
         };
 
-        this.poller = this.scheduler.scheduleWithFixedDelay(task, 10, 30, TimeUnit.SECONDS);
+        this.poller = this.scheduler.scheduleWithFixedDelay(this.updatetask, 10, 30, TimeUnit.SECONDS);
     }
 
     @SuppressWarnings("null")
