@@ -52,6 +52,8 @@ public class ZoneMinderConstants {
     public static final String PARAM_PORT = "port";
     public static final String PARAM_REFRESH_INTERVAL_ = "refresh_interval";
     public static final String PARAM_REFRESH_INTERVAL_DISKUSAGE = "refresh_interval_disk_usage";
+    public static final String PARAM_REFRESH_INTERVAL_IMAGE = "refresh_interval_image";
+    public static final String PARAM_ENABLE_IMAGE_UPDATES = "enable_image_updates";
 
     // Default values for Monitor parameters
     public static final Integer DEFAULT_HTTP_PORT = 80;
@@ -74,6 +76,8 @@ public class ZoneMinderConstants {
     public static final String CHANNEL_MONITOR_RECORD_STATE = "recording";
     public static final String CHANNEL_MONITOR_DETAILED_STATUS = "detailed-status";
     public static final String CHANNEL_MONITOR_FUNCTION = "function";
+    public static final String CHANNEL_MONITOR_IMAGE = "image";
+    public static final String CHANNEL_MONITOR_VIDEOURL = "videourl";
 
     public static final String CHANNEL_MONITOR_CAPTURE_DAEMON_STATE = "capture-daemon";
     public static final String CHANNEL_MONITOR_ANALYSIS_DAEMON_STATE = "analysis-daemon";

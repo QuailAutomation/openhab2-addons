@@ -22,6 +22,8 @@ import java.util.concurrent.TimeUnit;
 import javax.security.auth.login.FailedLoginException;
 
 import org.apache.commons.lang.StringUtils;
+import org.eclipse.jdt.annotation.NonNull;
+import org.eclipse.smarthome.config.core.Configuration;
 import org.eclipse.smarthome.config.discovery.DiscoveryService;
 import org.eclipse.smarthome.core.library.types.DecimalType;
 import org.eclipse.smarthome.core.library.types.OnOffType;
@@ -138,7 +140,7 @@ public class ZoneMinderServerBridgeHandler extends BaseBridgeHandler implements 
                 boolean fetchDiskUsage = false;
 
                 if (!isOnline()) {
-                    logger.debug("{}: Bridge '{}' is noit online skipping refresh", getLogIdentifier(), thing.getUID());
+                    logger.debug("{}: Bridge '{}' is not online skipping refresh", getLogIdentifier(), thing.getUID());
                 }
 
                 refreshCycleCount++;
@@ -386,6 +388,12 @@ public class ZoneMinderServerBridgeHandler extends BaseBridgeHandler implements 
 
     protected ZoneMinderBridgeServerConfig getBridgeConfig() {
         return this.getConfigAs(ZoneMinderBridgeServerConfig.class);
+    }
+
+    @Override
+    protected void updateConfiguration(@NonNull Configuration configuration) {
+        super.updateConfiguration(configuration);
+        // Inform thing handlers of connection
     }
 
     /**

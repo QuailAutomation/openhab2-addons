@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
+import org.eclipse.smarthome.core.items.Item;
 import org.eclipse.smarthome.core.library.types.OnOffType;
 import org.eclipse.smarthome.core.library.types.StringType;
 import org.eclipse.smarthome.core.thing.Bridge;
@@ -297,6 +298,7 @@ public abstract class ZoneMinderBaseThingHandler extends BaseThingHandler implem
      */
     public Channel getChannel(ChannelUID channelUID) {
         Channel channel = null;
+        Item item = null;
 
         List<Channel> channels = getThing().getChannels();
 
@@ -352,6 +354,10 @@ public abstract class ZoneMinderBaseThingHandler extends BaseThingHandler implem
      */
     protected Integer getConfigValueAsInteger(String configKey) {
         return (Integer) getConfigValue(configKey);
+    }
+
+    protected Boolean getConfigValueAsBooelan(String configKey) {
+        return (Boolean) getConfigValue(configKey);
     }
 
     protected BigDecimal getConfigValueAsBigDecimal(String configKey) {
