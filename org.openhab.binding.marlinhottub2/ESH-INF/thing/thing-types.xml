@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<thing:thing-descriptions bindingId="marlinhottub2"
+                          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                          xmlns:thing="http://eclipse.org/smarthome/schemas/thing-description/v1.0.0"
+                          xsi:schemaLocation="http://eclipse.org/smarthome/schemas/thing-description/v1.0.0 http://eclipse.org/smarthome/schemas/thing-description-1.0.0.xsd">
+
+    <thing-type id="marlinhottub2">
+        <label>Marlin Hot Tub Rev. 2</label>
+        <description>Marlin Hot Tub Binding, Rev. 2.0</description>
+
+        <channels>
+            <channel id="temperature" typeId="temp_chan"/>
+            <channel id="setpoint" typeId="setpoint_chan"/>
+            <channel id="pump" typeId="pump_switch"/>
+            <channel id="blower" typeId="blower_switch"/>
+            <channel id="heater" typeId="heater_state"/>
+        </channels>
+        <config-description>
+            <parameter name="hostname" type="text" required="true">
+                <context>network-address</context>
+                <label>Hottub hostname or ip</label>
+                <description>Hostname or IP for the hot tub on the local network. Do not include protocol</description>
+            </parameter>
+        </config-description>
+    </thing-type>
+
+    <channel-type id="temp_chan">
+        <item-type>Number</item-type>
+        <label>Temperature</label>
+        <description>Current Temperature</description>
+        <category>Thermostat</category>
+        <state pattern="%.1f °F" readOnly="true"/>
+    </channel-type>
+    <channel-type id="setpoint_chan">
+        <item-type>Number</item-type>
+        <label>Setpoint</label>
+        <description>Setpoint</description>
+        <category>Thermostat</category>
+        <state pattern="%.1f °F" readOnly="false"/>
+    </channel-type>
+    <channel-type id="pump_switch">
+        <item-type>Switch</item-type>
+        <label>Pump Off/On</label>
+        <description>On/off switch for the Pump</description>
+        <category>Switch</category>
+        <state readOnly="false" />
+    </channel-type>
+    <channel-type id="blower_switch">
+        <item-type>Switch</item-type>
+        <label>Blower Off/On</label>
+        <description>On/off switch for the Blower</description>
+        <category>Switch</category>
+        <state readOnly="false" />
+    </channel-type>
+    <channel-type id="heater_state">
+        <item-type>Switch</item-type>
+        <label>Heater Off/On</label>
+        <description>On/off status of the Heater</description>
+        <category>Switch</category>
+        <state readOnly="true" />
+    </channel-type>
+
+</thing:thing-descriptions>
