@@ -1,6 +1,9 @@
 package org.openhab.binding.isy.handler;
 
 import java.math.BigDecimal;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
 
 import org.eclipse.smarthome.config.discovery.DiscoveryService;
 import org.eclipse.smarthome.core.thing.Bridge;
@@ -8,9 +11,11 @@ import org.eclipse.smarthome.core.thing.ChannelUID;
 import org.eclipse.smarthome.core.thing.Thing;
 import org.eclipse.smarthome.core.thing.ThingStatus;
 import org.eclipse.smarthome.core.thing.binding.BaseBridgeHandler;
+import org.eclipse.smarthome.core.thing.binding.ThingHandler;
 import org.eclipse.smarthome.core.types.Command;
 import org.openhab.binding.isy.IsyBindingConstants;
 import org.openhab.binding.isy.config.IsyBridgeConfiguration;
+import org.openhab.binding.isy.config.IsyInsteonDeviceConfiguration;
 import org.openhab.binding.isy.discovery.IsyRestDiscoveryService;
 import org.openhab.binding.isy.internal.ISYModelChangeListener;
 import org.openhab.binding.isy.internal.InsteonClientProvider;
@@ -18,6 +23,7 @@ import org.openhab.binding.isy.internal.IsyRestClient;
 import org.openhab.binding.isy.internal.IsyWebSocketSubscription;
 import org.openhab.binding.isy.internal.NodeAddress;
 import org.openhab.binding.isy.internal.OHIsyClient;
+import org.openhab.binding.isy.internal.Scene;
 import org.openhab.binding.isy.internal.VariableType;
 import org.openhab.binding.isy.internal.protocol.Event;
 import org.openhab.binding.isy.internal.protocol.EventInfo;
@@ -58,6 +64,7 @@ public class IsyBridgeHandler extends BaseBridgeHandler implements InsteonClient
      */
 
     private XStream xStream;
+    private DeviceToSceneMapper sceneMapper;
 
     public IsyBridgeHandler(Bridge bridge) {
         super(bridge);
@@ -69,6 +76,8 @@ public class IsyBridgeHandler extends BaseBridgeHandler implements InsteonClient
                 ZoneEvent.class, AreaEvent.class, VariableList.class, StateVariable.class, VariableEvent.class,
                 SubscriptionResponse.class, Topology.class, Zone.class, ElkStatus.class, Areas.class, Area.class,
                 Node.class, Nodes.class, NodeInfo.class });
+
+        this.sceneMapper = new DeviceToSceneMapper(this);
     }
 
     @Override
@@ -101,25 +110,42 @@ public class IsyBridgeHandler extends BaseBridgeHandler implements InsteonClient
     @Override
     public void initialize() {
         logger.debug("initialize called for bridge handler");
+
         IsyBridgeConfiguration config = getThing().getConfiguration().as(IsyBridgeConfiguration.class);
 
         String usernameAndPassword = config.getUser() + ":" + config.getPassword();
         String authorizationHeaderValue = "Basic "
                 + java.util.Base64.getEncoder().encodeToString(usernameAndPassword.getBytes());
+        this.isyClient = new IsyRestClient(config.getIpAddress(), authorizationHeaderValue, xStream);
 
-        eventSubscriber = new IsyWebSocketSubscription(config.getIpAddress(), authorizationHeaderValue,
+        // initialize mapping scene links to scene addresses. Do this before starting web service
+        // this way we get the initial set of updates for scenes too
+        List<Scene> scenes = this.isyClient.getScenes();
+        for (Scene scene : scenes) {
+            this.getSceneMapper().addSceneConfig(scene.address, scene.links);
+        }
+
+        this.eventSubscriber = new IsyWebSocketSubscription(config.getIpAddress(), authorizationHeaderValue,
                 new ISYModelChangeListener() {
 
                     @Override
                     public void onModelChanged(Event event) {
-                        logger.debug("onModelChanged called, control: {}, action: {}, var event: {}",
-                                event.getControl(), event.getAction(), event.getEventInfo().getVariableEvent());
+                        logger.debug("onModelChanged called, node: {}, control: {}, action: {}, var event: {}",
+                                event.getNode(), event.getControl(), event.getAction(),
+                                event.getEventInfo().getVariableEvent());
                         IsyDeviceHandler handler = null;
+                        Set<SceneHandler> sceneHandlers = null;
                         if (!"".equals(event.getNode())) {
                             handler = getThingHandler(event.getNode());
+                            sceneHandlers = sceneMapper.getSceneHandlerFor(event.getNode());
                         }
                         if (handler != null) {
                             handler.handleUpdate(event.getControl(), event.getAction(), event.getNode());
+                        }
+                        if (sceneHandlers != null) {
+                            for (SceneHandler sceneHandler : sceneHandlers) {
+                                sceneHandler.handleUpdate(event.getControl(), event.getAction(), event.getNode());
+                            }
                         }
                     }
 
@@ -146,9 +172,9 @@ public class IsyBridgeHandler extends BaseBridgeHandler implements InsteonClient
                         }
                     }
                 }, xStream);
-        eventSubscriber.connect();
-        isyClient = new IsyRestClient(config.getIpAddress(), authorizationHeaderValue, xStream);
-        updateStatus(ThingStatus.ONLINE);
+        this.eventSubscriber.connect();
+
+        this.updateStatus(ThingStatus.ONLINE);
 
     }
 
@@ -194,5 +220,28 @@ public class IsyBridgeHandler extends BaseBridgeHandler implements InsteonClient
     @Override
     public OHIsyClient getInsteonClient() {
         return isyClient;
+    }
+
+    public DeviceToSceneMapper getSceneMapper() {
+        return this.sceneMapper;
+    }
+
+    ThingHandler getHandlerForInsteonAddress(String address) {
+        logger.debug("getHandlerForInsteonAddress: trying address {}", address);
+        Bridge bridge = this.getThing();
+        Iterator<Thing> things = bridge.getThings().iterator();
+        while (things.hasNext()) {
+            Thing thing = things.next();
+            if (!(thing.getHandler() instanceof IsyVariableHandler)) {
+                IsyInsteonDeviceConfiguration config = thing.getConfiguration().as(IsyInsteonDeviceConfiguration.class);
+                logger.trace("getHandlerForInsteonAddress: got config address {}", config.address);
+                if (address.equals(config.address)) {
+                    logger.debug("getHandlerForInsteonAddress: found handler for address {}", address);
+                    return thing.getHandler();
+                }
+            }
+        }
+        logger.debug("getHandlerForInsteonAddress: no handler found for address {}", address);
+        return null;
     }
 }

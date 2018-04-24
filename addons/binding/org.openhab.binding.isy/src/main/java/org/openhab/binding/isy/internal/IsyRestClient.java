@@ -312,9 +312,33 @@ public class IsyRestClient implements OHIsyClient {
                     Element firstElement = (Element) node;
 
                     String name = getValue(firstElement, "name");
+                    if ("ISY".equalsIgnoreCase(name)) {
+                        continue;
+                    }
                     String address = getValue(firstElement, "address");
-                    logger.debug("read another scene from xml: " + name);
-                    returnValue.add(new Scene(removeBadChars(name), address));
+                    List<String> links = new ArrayList<String>();
+                    org.w3c.dom.NodeList linklist = firstElement.getElementsByTagName("link");
+                    int llsize = linklist.getLength();
+
+                    for (int ii = 0; ii < linklist.getLength(); ii++) {
+                        org.w3c.dom.Node linknode = linklist.item(ii);
+                        if (linknode == null) {
+                            logger.debug("a link is null in scene '{}'", name);
+                            continue;
+                        }
+                        if (linknode.getNodeType() != org.w3c.dom.Node.ELEMENT_NODE) {
+                            logger.debug("a link is not a XML node in scene '{}'", name);
+                            continue;
+                        }
+                        Element firstLinkElement = (Element) linknode;
+                        String link = firstLinkElement.getTextContent();
+                        if (link != null) {
+                            links.add(link);
+                        }
+                    }
+                    logger.debug("read another scene from xml: " + name + " with address " + address + " and "
+                            + links.size() + " links");
+                    returnValue.add(new Scene(removeBadChars(name), address, links));
                 }
 
             }

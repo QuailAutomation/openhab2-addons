@@ -177,6 +177,10 @@ public class IsyRestDiscoveryService extends AbstractDiscoveryService {
             logger.debug("scene address: {}", scene.address);
             properties.put(IsyInsteonDeviceConfiguration.NAME, scene.name);
             logger.debug("scene name: {}", scene.name);
+
+            this.bridgeHandler.getSceneMapper().addSceneConfig(scene.address, scene.links);
+            logger.debug("scene {} added {} links", scene.name, scene.links.size());
+
             ThingTypeUID theThingTypeUid = IsyBindingConstants.SCENE_THING_TYPE;
             String thingID = removeInvalidUidChars(scene.address);
             logger.debug("scene address: {}", thingID);
