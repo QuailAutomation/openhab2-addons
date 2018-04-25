@@ -19,18 +19,18 @@ import org.eclipse.smarthome.core.thing.binding.BaseThingHandlerFactory;
 import org.eclipse.smarthome.core.thing.binding.ThingHandler;
 import org.eclipse.smarthome.core.thing.binding.ThingHandlerFactory;
 import org.openhab.binding.marlinhottub.MarlinHotTubBindingConstants;
-import org.openhab.binding.marlinhottub.handler.MarlinHotTubHandler;
+import org.openhab.binding.marlinhottub.handler.MarlinHottubHandler;
 import org.osgi.service.component.annotations.Component;
 
 /**
- * The {@link MarlinHotTubHandlerFactory} is responsible for creating things and thing
+ * The {@link MarlinHottubHandlerFactory} is responsible for creating things and thing
  * handlers.
  *
  * @author Thomas Hentschel - Initial contribution
  */
 @Component(service = ThingHandlerFactory.class, immediate = true, configurationPid = "binding.marlinhottub")
 @NonNullByDefault
-public class MarlinHotTubHandlerFactory extends BaseThingHandlerFactory {
+public class MarlinHottubHandlerFactory extends BaseThingHandlerFactory {
 
     @SuppressWarnings("null")
     private static final Set<ThingTypeUID> SUPPORTED_THING_TYPES_UIDS = Collections
@@ -46,7 +46,7 @@ public class MarlinHotTubHandlerFactory extends BaseThingHandlerFactory {
         ThingTypeUID thingTypeUID = thing.getThingTypeUID();
 
         if (thingTypeUID.equals(MarlinHotTubBindingConstants.THING_TYPE_MARLINHOTTUB)) {
-            return new MarlinHotTubHandler(thing);
+            return new MarlinHottubHandler(thing);
         }
 
         return null;
