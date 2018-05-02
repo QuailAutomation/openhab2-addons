@@ -327,6 +327,7 @@ public class MarlinHottubHandler extends BaseThingHandler {
     class UpdateHandler {
         private MarlinHottubHandler handler;
         private Channel channel;
+        @SuppressWarnings("null")
         private String currentState = null;
         private final ArrayList<Class<? extends State>> acceptedDataTypes = new ArrayList<Class<? extends State>>();
 
