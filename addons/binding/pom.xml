@@ -103,9 +103,5 @@
     <module>org.openhab.binding.isy</module>
     <module>org.openhab.binding.zoneminder</module>
     <module>org.openhab.binding.zway</module>
-    <module>org.openhab.binding.marlinhottub</module>
-    <module>org.openhab.binding.ambientweather1400ip</module>
-    <module>org.openhab.binding.eagle200</module>
-    <module>org.openhab.binding.enphaseenvoy</module>
   </modules>
 </project>
