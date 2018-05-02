@@ -45,7 +45,6 @@ public class Eagle200Connection {
     private Eagle200BridgeHandler bridge;
     private Eagle200Configuration configuration;
     private XStream xStream;
-    @SuppressWarnings("unused")
     private final Logger logger = LoggerFactory.getLogger(Eagle200Connection.class);
 
     public Eagle200Connection(Eagle200BridgeHandler bridge) {
@@ -93,6 +92,7 @@ public class Eagle200Connection {
     public List<String> getMeterHWAddress() throws IOException {
         List<String> result = new ArrayList<String>();
         String xml = this.doPost(DEVICELIST_CMD);
+        logger.trace("Eagle200 meter HW address: " + xml);
         this.xStream.processAnnotations(DeviceListModel);
         DeviceList reply = (DeviceList) xStream.fromXML(xml);
         for (Device device : reply.getDevices()) {
@@ -106,6 +106,7 @@ public class Eagle200Connection {
     Map<String, String> queryMeter(String meterAddr) throws IOException {
         String cmd = QUERY_CMD_1 + meterAddr + QUERY_CMD_2;
         String xml = this.doPost(cmd);
+        logger.trace("Eagle200 meter query " + meterAddr + ": " + xml);
         this.xStream.processAnnotations(QueryModel);
         DeviceQuery reply = (DeviceQuery) xStream.fromXML(xml);
         List<Variable> vars = reply.getComponents().getComponents().get(0).getVariables().getVariables();

@@ -232,27 +232,6 @@ public class MarlinHottubHandler extends BaseThingHandler {
             return;
         }
 
-        Channel channel;
-
-        // channel = this.getThing().getChannel(TEMPERATURE);
-        // assert channel != null;
-        // this.updateHandlers.put(TEMPERATURE, new UpdateHandler(this, channel, DecimalType.class));
-        //
-        // channel = this.getThing().getChannel(SETPOINT);
-        // assert channel != null;
-        // this.updateHandlers.put(SETPOINT, new UpdateHandler(this, channel, DecimalType.class));
-        //
-        // channel = this.getThing().getChannel(PUMP);
-        // assert channel != null;
-        // this.updateHandlers.put(PUMP, new UpdateHandler(this, channel, OnOffType.class));
-        //
-        // channel = this.getThing().getChannel(BLOWER);
-        // assert channel != null;
-        // this.updateHandlers.put(BLOWER, new UpdateHandler(this, channel, OnOffType.class));
-        //
-        // channel = this.getThing().getChannel(HEATER);
-        // assert channel != null;
-        // this.updateHandlers.put(HEATER, new UpdateHandler(this, channel, OnOffType.class));
         this.installChannelHandler("temperature", "temperature", "Number", DecimalType.class);
         this.installChannelHandler("setpoint", "setpoint", "Number", DecimalType.class);
         this.installChannelHandler("pump", "pump", "Switch", OnOffType.class);

@@ -14,6 +14,7 @@ package org.openhab.binding.eagle200.handler;
 
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.SortedMap;
 import java.util.TreeMap;
@@ -49,6 +50,7 @@ public class Eagle200MeterHandler extends BaseThingHandler {
 
     private final Logger logger = LoggerFactory.getLogger(Eagle200MeterHandler.class);
     private Runnable scraper;
+    private Map<String, String> lastupdates = new HashMap<String, String>();
 
     public Eagle200MeterHandler(Thing thing) {
         super(thing);
@@ -76,11 +78,6 @@ public class Eagle200MeterHandler extends BaseThingHandler {
                 }
             }
         };
-
-        if (this.getBridge() == null) {
-            logger.debug("no bridge (yet?) for " + this.getThing().getUID());
-            return;
-        }
     }
 
     @Override
@@ -136,12 +133,18 @@ public class Eagle200MeterHandler extends BaseThingHandler {
         return key.replace("zigbee:", "");
     }
 
+    @SuppressWarnings({ "null", "unused" })
     private void updateChannels(Map<String, String> updates) {
 
-        // TODO: figure how to update only values that changed
         for (Map.Entry<String, String> update : updates.entrySet()) {
-            this.updateState(this.getChannelUID(update.getKey()), new StringType(update.getValue()));
+            String lastvalue = this.lastupdates.get(update.getKey());
+            if (lastvalue == null) {
+                this.updateState(this.getChannelUID(update.getKey()), new StringType(update.getValue()));
+            } else if (update.getValue() != null && !update.getValue().equals(this.lastupdates.get(update.getKey()))) {
+                this.updateState(this.getChannelUID(update.getKey()), new StringType(update.getValue()));
+            }
         }
+        this.lastupdates = updates;
     }
 
     @Override

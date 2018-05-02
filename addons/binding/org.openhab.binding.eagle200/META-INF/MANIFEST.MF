@@ -1,3 +1,4 @@
+Automatic-Module-Name: org.openhab.binding.eagle200
 Manifest-Version: 1.0
 Bundle-ActivationPolicy: lazy
 Bundle-ClassPath: .,
