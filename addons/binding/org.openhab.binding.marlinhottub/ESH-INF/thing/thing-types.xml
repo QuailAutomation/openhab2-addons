@@ -21,6 +21,11 @@
                 <label>Hottub hostname or ip</label>
                 <description>Hostname or IP for the hot tub</description>
             </parameter>
+            <parameter name="scanrate" type="integer" required="false">
+                <label>Scan Rate</label>
+                <description>Scan Rate in Seconds</description>
+                <default>60</default>
+            </parameter>
         </config-description>
     </thing-type>
 

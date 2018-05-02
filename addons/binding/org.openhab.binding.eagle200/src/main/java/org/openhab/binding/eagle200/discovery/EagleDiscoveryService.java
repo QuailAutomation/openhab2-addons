@@ -120,7 +120,8 @@ public class EagleDiscoveryService extends AbstractDiscoveryService implements E
         try {
             meterAddresses = bridgeHandler.getConnection().getMeterHWAddress();
         } catch (IOException | IllegalStateException e) {
-            logger.warn("connection to Eagle failed, stopping device scan. Fix network or configuration", e);
+            logger.warn("connection to Eagle failed, stopping device scan. Fix network or configuration: {}",
+                    e.getMessage());
             return;
         }
 

@@ -15,6 +15,7 @@ package org.openhab.binding.ambientweather1400ip.handler;
 import static org.openhab.binding.ambientweather1400ip.AmbientWeather1400IPBindingConstants.*;
 
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.ArrayList;
@@ -24,6 +25,7 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.io.IOUtils;
+import org.eclipse.jdt.annotation.NonNull;
 import org.eclipse.smarthome.core.library.types.DecimalType;
 import org.eclipse.smarthome.core.thing.Channel;
 import org.eclipse.smarthome.core.thing.ChannelUID;
@@ -39,6 +41,7 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
+import org.openhab.binding.ambientweather1400ip.AmbientWeather1400IPBindingConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -78,6 +81,7 @@ public class AmbientWeather1400IPHandler extends BaseThingHandler {
     private static String livedata = "/livedata.htm";
     private final Logger logger = LoggerFactory.getLogger(AmbientWeather1400IPHandler.class);
     private String hostname = "";
+    private int scanrate = 60;
     private Map<String, UpdateHandler> updateHandlers;
     private Map<String, String> inputMapper;
 
@@ -88,55 +92,28 @@ public class AmbientWeather1400IPHandler extends BaseThingHandler {
         super(thing);
         this.updateHandlers = new HashMap<String, UpdateHandler>();
         this.inputMapper = new HashMap<String, String>();
-    }
 
-    @SuppressWarnings("null")
-    private String callWebUpdate() throws IOException {
-
-        String urlStr = "http://" + this.hostname + livedata;
-        URL url = new URL(urlStr);
-        URLConnection connection = url.openConnection();
-        try {
-            String response = IOUtils.toString(connection.getInputStream());
-            logger.trace("AWS response = {}", response);
-            return response;
-        } finally {
-            IOUtils.closeQuietly(connection.getInputStream());
-        }
-    }
-
-    private void createChannel(String chanName, Class<? extends State> type, String htmlName) {
-        Channel channel = this.getThing().getChannel(chanName);
-        assert channel != null;
-        this.updateHandlers.put(chanName, new UpdateHandler(this, channel, type));
-        this.inputMapper.put(htmlName, chanName);
-    }
-
-    @Override
-    public void dispose() {
-        if (this.poller != null) {
-            this.poller.cancel(true);
-        }
-        this.inputMapper.clear();
-        this.updateHandlers.clear();
-        super.dispose();
-    }
-
-    @Override
-    public void handleCommand(ChannelUID channelUID, Command command) {
-        // No commands but refresh to handle for this device
-
-        if (command instanceof RefreshType) {
-            // only allow one refresh channel poll
-            // every update updates all channels anyways, so no need to blast the weather station with the
-            // same request
-            // just run the web get + parse task inline, it will do the right thing
-            if (channelUID.getId().equals(OUTDOOR_TEMP)) {
-                if (this.updatetask != null) {
-                    this.updatetask.run();
+        this.updatetask = new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    String webResponse = AmbientWeather1400IPHandler.this.callWebUpdate();
+                    // in case we come back from an outage -> set status online
+                    if (!getThing().getStatus().equals(ThingStatus.ONLINE)) {
+                        updateStatus(ThingStatus.ONLINE);
+                    }
+                    AmbientWeather1400IPHandler.this.parseAndUpdate(webResponse);
+                } catch (Exception e) {
+                    logger.error(e.getLocalizedMessage());
+                    if (!getThing().getStatus().equals(ThingStatus.OFFLINE)) {
+                        String msg = "Unable to reach '" + hostname
+                                + "', please check that the 'hostname/ip' setting is correct, or if there is a network problem. Detailed error: '";
+                        msg += e.getLocalizedMessage() + "'";
+                        updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.COMMUNICATION_ERROR, msg);
+                    }
                 }
             }
-        }
+        };
     }
 
     @Override
@@ -147,13 +124,22 @@ public class AmbientWeather1400IPHandler extends BaseThingHandler {
             this.poller.cancel(true);
         }
 
-        this.hostname = (String) getThing().getConfiguration().get("hostname");
+        this.hostname = (String) getThing().getConfiguration()
+                .get(AmbientWeather1400IPBindingConstants.CONFIG_HOSTNAME);
         // basic sanity
         if (this.hostname == null || this.hostname.equals("")) {
             String msg = "Invalid hostname '" + this.hostname + ", please check configuration";
             updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.CONFIGURATION_ERROR, msg);
             return;
         }
+
+        BigDecimal freq = (BigDecimal) getThing().getConfiguration()
+                .get(AmbientWeather1400IPBindingConstants.CONFIG_SCANRATE);
+
+        if (freq == null) {
+            freq = new BigDecimal(60);
+        }
+        this.scanrate = freq.intValue();
 
         this.createChannel(INDOOR_TEMP, DecimalType.class, "inTemp");
         this.createChannel(OUTDOOR_TEMP, DecimalType.class, "outTemp");
@@ -177,34 +163,80 @@ public class AmbientWeather1400IPHandler extends BaseThingHandler {
         this.updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.CONFIGURATION_PENDING,
                 "Contacting weather station...");
 
-        // create a poller task that polls the web page
-        this.updatetask = new Runnable() {
+        this.poller = this.scheduler.scheduleWithFixedDelay(this.updatetask, 1, this.scanrate, TimeUnit.SECONDS);
+    }
 
-            @Override
-            public void run() {
-                try {
-                    String webResponse = AmbientWeather1400IPHandler.this.callWebUpdate();
+    @SuppressWarnings("null")
+    @Override
+    public void handleConfigurationUpdate(@NonNull Map<@NonNull String, @NonNull Object> config) {
+        super.handleConfigurationUpdate(config);
 
-                    // in case we come back from an outage -> set status online
-                    if (!getThing().getStatus().equals(ThingStatus.ONLINE)) {
-                        updateStatus(ThingStatus.ONLINE);
-                    }
-                    AmbientWeather1400IPHandler.this.parseAndUpdate(webResponse);
-                } catch (Exception e) {
-                    // e.printStackTrace();
-                    logger.error(e.getLocalizedMessage());
-                    // make thing go offline if the weather station isn't reachable
-                    if (!getThing().getStatus().equals(ThingStatus.OFFLINE)) {
-                        String msg = "Unable to reach '" + hostname
-                                + "', please check that the 'hostname/ip' setting is correct, or if there is a network problem. Detailed error: '";
-                        msg += e.getLocalizedMessage() + "'";
-                        updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.COMMUNICATION_ERROR, msg);
-                    }
+        boolean changed = false;
+
+        String hostname_new = (String) config.get(AmbientWeather1400IPBindingConstants.CONFIG_HOSTNAME);
+        if (hostname_new != null && !hostname_new.equals(this.hostname)) {
+            this.hostname = hostname_new;
+            changed = true;
+        }
+
+        BigDecimal scanrate_new = (BigDecimal) config.get(AmbientWeather1400IPBindingConstants.CONFIG_SCANRATE);
+        if (scanrate_new != null && this.scanrate != scanrate_new.intValue()) {
+            this.scanrate = scanrate_new.intValue();
+            changed = true;
+        }
+
+        if (changed) {
+            if (this.poller != null && !this.poller.isDone()) {
+                this.poller.cancel(true);
+            }
+            this.poller = this.scheduler.scheduleWithFixedDelay(this.updatetask, 1, this.scanrate, TimeUnit.SECONDS);
+        }
+    }
+
+    @Override
+    public void dispose() {
+        if (this.poller != null && !this.poller.isDone()) {
+            this.poller.cancel(true);
+        }
+        this.inputMapper.clear();
+        this.updateHandlers.clear();
+        super.dispose();
+    }
+
+    @Override
+    public void handleCommand(ChannelUID channelUID, Command command) {
+        // No commands but refresh to handle for this device
+        if (command instanceof RefreshType) {
+            // only allow one refresh channel poll
+            // every update updates all channels anyways, so no need to blast the weather station with the
+            // same request just run the web get + parse task inline, it will do the right thing
+            if (channelUID.getId().equals(OUTDOOR_TEMP)) {
+                if (this.updatetask != null) {
+                    this.updatetask.run();
                 }
             }
-        };
+        }
+    }
 
-        this.poller = this.scheduler.scheduleWithFixedDelay(this.updatetask, 10, 30, TimeUnit.SECONDS);
+    private void createChannel(String chanName, Class<? extends State> type, String htmlName) {
+        Channel channel = this.getThing().getChannel(chanName);
+        assert channel != null;
+        this.updateHandlers.put(chanName, new UpdateHandler(this, channel, type));
+        this.inputMapper.put(htmlName, chanName);
+    }
+
+    private String callWebUpdate() throws IOException {
+
+        String urlStr = "http://" + this.hostname + livedata;
+        URL url = new URL(urlStr);
+        URLConnection connection = url.openConnection();
+        try {
+            String response = IOUtils.toString(connection.getInputStream());
+            logger.trace("AWS response = {}", response);
+            return response;
+        } finally {
+            IOUtils.closeQuietly(connection.getInputStream());
+        }
     }
 
     @SuppressWarnings("null")

@@ -32,4 +32,7 @@ public class MarlinHotTubBindingConstants {
     public static final String HEATER = "heater";
     public static final String BLOWER = "blower";
 
+    public static final String CONFIG_HOSTNAME = "hostname";
+    public static final String CONFIG_SCANRATE = "scanrate";
+
 }

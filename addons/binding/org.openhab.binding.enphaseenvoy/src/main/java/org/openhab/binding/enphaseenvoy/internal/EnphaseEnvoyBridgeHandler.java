@@ -62,20 +62,13 @@ public class EnphaseEnvoyBridgeHandler extends BaseBridgeHandler {
 
     private final static String PRODUCTION_URL = "/api/v1/production";
 
-    // @Nullable
-    // private EnphaseEnvoyBridgeConfiguration config;
-
     @Nullable
     private Runnable scanner;
-
     @Nullable
     private ScheduledFuture<?> task;
-
     @SuppressWarnings("unused")
     private EnphaseEnvoyDiscoveryService discoveryService;
-
     private InverterParser inverterParser;
-
     private SystemProduction lastupdate;
 
     @SuppressWarnings("null")
@@ -90,11 +83,6 @@ public class EnphaseEnvoyBridgeHandler extends BaseBridgeHandler {
         };
         this.inverterParser = new InverterParser(this);
         this.lastupdate = new SystemProduction();
-    }
-
-    @Override
-    public void handleCommand(ChannelUID channelUID, Command command) {
-        // NOOP
     }
 
     @SuppressWarnings({ "unused", "null" })
@@ -155,6 +143,17 @@ public class EnphaseEnvoyBridgeHandler extends BaseBridgeHandler {
         if (!currentStatus.equals(ThingStatus.ONLINE)) {
             this.updateStatus(ThingStatus.ONLINE);
         }
+    }
+
+    @Override
+    public void handleCommand(ChannelUID channelUID, Command command) {
+        // NOOP
+    }
+
+    @Override
+    public void dispose() {
+        this.stopScanner();
+        super.dispose();
     }
 
     public EnphaseEnvoyBridgeConfiguration getConfiguration() {

@@ -15,6 +15,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.InterruptedIOException;
 import java.io.OutputStreamWriter;
+import java.math.BigDecimal;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
@@ -25,6 +26,7 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.io.IOUtils;
+import org.eclipse.jdt.annotation.NonNull;
 import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.eclipse.jdt.annotation.Nullable;
 import org.eclipse.smarthome.core.library.types.DecimalType;
@@ -39,6 +41,7 @@ import org.eclipse.smarthome.core.types.Command;
 import org.eclipse.smarthome.core.types.RefreshType;
 import org.eclipse.smarthome.core.types.State;
 import org.eclipse.smarthome.core.types.TypeParser;
+import org.openhab.binding.marlinhottub.MarlinHotTubBindingConstants;
 import org.openhab.binding.marlinhottub.internal.Hottub;
 import org.openhab.binding.marlinhottub.internal.Switch;
 import org.openhab.binding.marlinhottub.internal.Temperature;
@@ -66,6 +69,8 @@ public class MarlinHottubHandler extends BaseThingHandler {
     private String hostname = "";
     private XStream xStream;
     private Map<String, UpdateHandler> updateHandlers;
+    private Runnable scraper;
+    private int scanrate;
 
     @SuppressWarnings("null")
     public MarlinHottubHandler(Thing thing) {
@@ -75,6 +80,33 @@ public class MarlinHottubHandler extends BaseThingHandler {
         this.xStream.setClassLoader(MarlinHottubHandler.class.getClassLoader());
         this.xStream.processAnnotations(new Class[] { Switch.class, Temperature.class, Hottub.class });
         this.updateHandlers = new HashMap<String, UpdateHandler>();
+        // create a poller task that polls the REST interface
+        this.scraper = new Runnable() {
+
+            @Override
+            public void run() {
+                try {
+                    String restResponse = MarlinHottubHandler.this.callRestUpdate();
+                    // in case we come back from an outage -> set status online
+                    if (!getThing().getStatus().equals(ThingStatus.ONLINE)) {
+                        updateStatus(ThingStatus.ONLINE);
+                    }
+                    MarlinHottubHandler.this.parseAndUpdate(restResponse);
+                } catch (InterruptedIOException ie) {
+                    return;
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    logger.error(e.getMessage());
+                    // make thing go offline if the hottub isn't reachable
+                    if (!getThing().getStatus().equals(ThingStatus.OFFLINE)) {
+                        String msg = "Unable to reach '" + hostname
+                                + "', please check that the 'hostname/ip' setting is correct, or if there is a network problem. Detailed error: '";
+                        msg += e.getMessage() + "'";
+                        updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.COMMUNICATION_ERROR, msg);
+                    }
+                }
+            }
+        };
     }
 
     @SuppressWarnings("null")
@@ -153,6 +185,83 @@ public class MarlinHottubHandler extends BaseThingHandler {
         }
     }
 
+    @SuppressWarnings("null")
+    @Override
+    public void initialize() {
+
+        if (this.poller != null) {
+            logger.debug("leftover poller task still running, attempting to cancel");
+            this.poller.cancel(true);
+        }
+
+        this.hostname = (String) getThing().getConfiguration().get(MarlinHotTubBindingConstants.CONFIG_HOSTNAME);
+        // basic sanity
+        if (this.hostname == null || this.hostname.equals("")) {
+            String msg = "Invalid hostname '" + this.hostname + ", please check configuration";
+            updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.CONFIGURATION_ERROR, msg);
+            return;
+        }
+
+        BigDecimal freq = (BigDecimal) getThing().getConfiguration().get(MarlinHotTubBindingConstants.CONFIG_SCANRATE);
+        if (freq == null) {
+            freq = new BigDecimal(60);
+        }
+        this.scanrate = freq.intValue();
+
+        this.installChannelHandler("temperature", "temperature", "Number", DecimalType.class);
+        this.installChannelHandler("setpoint", "setpoint", "Number", DecimalType.class);
+        this.installChannelHandler("pump", "pump", "Switch", OnOffType.class);
+        this.installChannelHandler("blower", "blower", "Switch", OnOffType.class);
+        this.installChannelHandler("heater", "heater", "Switch", OnOffType.class);
+
+        updateStatus(ThingStatus.ONLINE);
+        this.poller = this.scheduler.scheduleWithFixedDelay(this.scraper, 1, this.scanrate, TimeUnit.SECONDS);
+    }
+
+    @SuppressWarnings("null")
+    @Override
+    public void handleConfigurationUpdate(@NonNull Map<@NonNull String, @NonNull Object> update) {
+        super.handleConfigurationUpdate(update);
+
+        boolean changed = false;
+        if (update.containsKey(MarlinHotTubBindingConstants.CONFIG_HOSTNAME)) {
+            this.hostname = (String) update.get(MarlinHotTubBindingConstants.CONFIG_HOSTNAME);
+            changed = true;
+        }
+        if (update.containsKey(MarlinHotTubBindingConstants.CONFIG_SCANRATE)) {
+            BigDecimal freq = (BigDecimal) update.get(MarlinHotTubBindingConstants.CONFIG_SCANRATE);
+            if (freq != null) {
+                this.scanrate = freq.intValue();
+                changed = true;
+            }
+        }
+        if (changed) {
+            if (this.poller != null && !this.poller.isDone()) {
+                this.poller.cancel(true);
+            }
+            this.poller = this.scheduler.scheduleWithFixedDelay(this.scraper, 1, this.scanrate, TimeUnit.SECONDS);
+        }
+    }
+
+    @SuppressWarnings("null")
+    @Override
+    public void dispose() {
+        if (this.poller != null && !this.poller.isDone()) {
+            this.poller.cancel(true);
+        }
+        super.dispose();
+    }
+
+    private void installChannelHandler(String channelID, String label, String allowedTypes,
+            Class<? extends State> varType) {
+        Channel ch = this.getThing().getChannel(channelID);
+        if (ch == null) {
+            throw new IllegalStateException("channel for " + channelID + " not present");
+        } else {
+            this.updateHandlers.put(channelID, new UpdateHandler(this, ch, varType));
+        }
+    }
+
     private String getBaseURL() {
         return "http://" + this.hostname + restHottub;
     }
@@ -215,84 +324,10 @@ public class MarlinHottubHandler extends BaseThingHandler {
         }
     }
 
-    @SuppressWarnings("null")
-    @Override
-    public void initialize() {
-
-        if (this.poller != null) {
-            logger.debug("leftover poller task still running, attempting to cancel");
-            this.poller.cancel(true);
-        }
-
-        this.hostname = (String) getThing().getConfiguration().get("hostname");
-        // basic sanity
-        if (this.hostname == null || this.hostname.equals("")) {
-            String msg = "Invalid hostname '" + this.hostname + ", please check configuration";
-            updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.CONFIGURATION_ERROR, msg);
-            return;
-        }
-
-        this.installChannelHandler("temperature", "temperature", "Number", DecimalType.class);
-        this.installChannelHandler("setpoint", "setpoint", "Number", DecimalType.class);
-        this.installChannelHandler("pump", "pump", "Switch", OnOffType.class);
-        this.installChannelHandler("blower", "blower", "Switch", OnOffType.class);
-        this.installChannelHandler("heater", "heater", "Switch", OnOffType.class);
-
-        updateStatus(ThingStatus.ONLINE);
-
-        // create a poller task that polls the REST interface
-        Runnable task = new Runnable() {
-
-            @Override
-            public void run() {
-                try {
-                    String restResponse = MarlinHottubHandler.this.callRestUpdate();
-                    // in case we come back from an outage -> set status online
-                    if (!getThing().getStatus().equals(ThingStatus.ONLINE)) {
-                        updateStatus(ThingStatus.ONLINE);
-                    }
-                    MarlinHottubHandler.this.parseAndUpdate(restResponse);
-                } catch (InterruptedIOException ie) {
-                    return;
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    logger.error(e.getMessage());
-                    // make thing go offline if the hottub isn't reachable
-                    if (!getThing().getStatus().equals(ThingStatus.OFFLINE)) {
-                        String msg = "Unable to reach '" + hostname
-                                + "', please check that the 'hostname/ip' setting is correct, or if there is a network problem. Detailed error: '";
-                        msg += e.getMessage() + "'";
-                        updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.COMMUNICATION_ERROR, msg);
-                    }
-                }
-            }
-        };
-
-        this.poller = this.scheduler.scheduleWithFixedDelay(task, 1, 15, TimeUnit.SECONDS);
-    }
-
-    private void installChannelHandler(String channelID, String label, String allowedTypes,
-            Class<? extends State> varType) {
-        Channel ch = this.getThing().getChannel(channelID);
-        if (ch == null) {
-            throw new IllegalStateException("channel for " + channelID + " not present");
-        } else {
-            this.updateHandlers.put(channelID, new UpdateHandler(this, ch, varType));
-        }
-    }
-
-    @Override
-    public void dispose() {
-        if (this.poller != null) {
-            this.poller.cancel(true);
-        }
-        super.dispose();
-    }
-
     class UpdateHandler {
         private MarlinHottubHandler handler;
         private Channel channel;
-        private String currentState = "";
+        private String currentState = null;
         private final ArrayList<Class<? extends State>> acceptedDataTypes = new ArrayList<Class<? extends State>>();
 
         UpdateHandler(MarlinHottubHandler handler, Channel channel, Class<? extends State> acceptedType) {
@@ -306,7 +341,7 @@ public class MarlinHottubHandler extends BaseThingHandler {
         public void processMessage(String message) {
             String value = message.toUpperCase();
             // only if there was a real change
-            if (value.equalsIgnoreCase(this.currentState) == false) {
+            if (!value.equalsIgnoreCase(this.currentState)) {
                 this.currentState = value;
                 State state = TypeParser.parseState(this.acceptedDataTypes, value);
                 this.handler.updateState(this.channel.getUID(), state);

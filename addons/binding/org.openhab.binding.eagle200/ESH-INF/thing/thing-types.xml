@@ -38,6 +38,7 @@
 			<parameter name="frequency" type="integer" required="false">
 				<label>scan period</label>
 				<description>scan period in seconds</description>
+				<default>60</default>
 			</parameter>
 		</config-description>
 	</thing-type>

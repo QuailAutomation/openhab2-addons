@@ -18,6 +18,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.SortedMap;
 import java.util.TreeMap;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 import org.eclipse.jdt.annotation.NonNull;
@@ -51,12 +52,14 @@ public class Eagle200MeterHandler extends BaseThingHandler {
     private final Logger logger = LoggerFactory.getLogger(Eagle200MeterHandler.class);
     private Runnable scraper;
     private Map<String, String> lastupdates = new HashMap<String, String>();
+    private ScheduledFuture<?> poller;
+    private int scanrate;
 
+    @SuppressWarnings("null")
     public Eagle200MeterHandler(Thing thing) {
         super(thing);
         this.scraper = new Runnable() {
 
-            @SuppressWarnings("null")
             @Override
             public void run() {
                 Configuration config = Eagle200MeterHandler.this.getConfig();
@@ -88,7 +91,48 @@ public class Eagle200MeterHandler extends BaseThingHandler {
         if (freq == null) {
             freq = new BigDecimal(60);
         }
-        this.scheduler.scheduleWithFixedDelay(this.scraper, 1, freq.intValue(), TimeUnit.SECONDS);
+        this.scanrate = freq.intValue();
+        this.poller = this.scheduler.scheduleWithFixedDelay(this.scraper, 1, this.scanrate, TimeUnit.SECONDS);
+    }
+
+    @SuppressWarnings("null")
+    @Override
+    public void handleConfigurationUpdate(@NonNull Map<@NonNull String, @NonNull Object> update) {
+        super.handleConfigurationUpdate(update);
+
+        boolean changed = false;
+        if (update.containsKey(Eagle200BindingConstants.THING_CONFIG_SCANFREQUENCY)) {
+            BigDecimal freq = (BigDecimal) update.get(Eagle200BindingConstants.THING_CONFIG_SCANFREQUENCY);
+            this.scanrate = freq.intValue();
+            changed = true;
+        }
+
+        if (changed) {
+            if (this.poller != null && !this.poller.isDone()) {
+                this.poller.cancel(true);
+            }
+            this.poller = this.scheduler.scheduleWithFixedDelay(this.scraper, 1, this.scanrate, TimeUnit.SECONDS);
+        }
+    }
+
+    @Override
+    public void bridgeStatusChanged(@NonNull ThingStatusInfo bridgeStatusInfo) {
+        logger.debug("bridgeStatusChanged for " + this.getThing().getUID());
+        super.bridgeStatusChanged(bridgeStatusInfo);
+    }
+
+    @Override
+    public void handleCommand(ChannelUID channelUID, Command command) {
+        // no commands, async updates only
+    }
+
+    @SuppressWarnings("null")
+    @Override
+    public void dispose() {
+        if (this.poller != null && !this.poller.isDone()) {
+            this.poller.cancel(true);
+        }
+        super.dispose();
     }
 
     @SuppressWarnings("null")
@@ -121,7 +165,6 @@ public class Eagle200MeterHandler extends BaseThingHandler {
             }
         }
         this.updateThing(builder.build());
-
         updateStatus(ThingStatus.ONLINE);
     }
 
@@ -145,22 +188,5 @@ public class Eagle200MeterHandler extends BaseThingHandler {
             }
         }
         this.lastupdates = updates;
-    }
-
-    @Override
-    public void handleConfigurationUpdate(@NonNull Map<@NonNull String, @NonNull Object> configurationParameters) {
-        logger.debug("handleConfigurationUpdate for " + this.getThing().getUID());
-        super.handleConfigurationUpdate(configurationParameters);
-    }
-
-    @Override
-    public void bridgeStatusChanged(@NonNull ThingStatusInfo bridgeStatusInfo) {
-        logger.debug("bridgeStatusChanged for " + this.getThing().getUID());
-        super.bridgeStatusChanged(bridgeStatusInfo);
-    }
-
-    @Override
-    public void handleCommand(ChannelUID channelUID, Command command) {
-        // no commands, async updates only
     }
 }

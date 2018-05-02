@@ -34,6 +34,11 @@
                 <label>Ambient Weather 1400 IP hostname or IP</label>
                 <description>Hostname or IP for the Ambient Weather 1400 IP</description>
             </parameter>
+            <parameter name="scanrate" type="integer" required="false">
+                <label>Scan Rate</label>
+                <description>Scan Rate for the Ambient Weather 1400 IP</description>
+                <default>60</default>
+            </parameter>
         </config-description>
 	</thing-type>
 
