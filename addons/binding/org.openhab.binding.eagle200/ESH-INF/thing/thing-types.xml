@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<thing:thing-descriptions bindingId="eagle200"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:thing="http://eclipse.org/smarthome/schemas/thing-description/v1.0.0"
+	xsi:schemaLocation="http://eclipse.org/smarthome/schemas/thing-description/v1.0.0 http://eclipse.org/smarthome/schemas/thing-description-1.0.0.xsd">
+
+	<!-- Sample Thing Type -->
+	<bridge-type id="eagle200_bridge">
+		<label>Eagle 200</label>
+		<description>Eagle 200 Device</description>
+
+		<config-description>
+			<parameter name="hostname" type="text" required="true">
+				<label>Host name or IP address</label>
+				<description>The host name or IP address</description>
+			</parameter>
+			<parameter name="cloudid" type="text" required="true">
+				<label>Cloud ID</label>
+				<description>The Cloud ID from the back of the device, lower case</description>
+			</parameter>
+			<parameter name="installcode" type="text" required="true">
+				<label>Install Code (IN)</label>
+				<description>The Install Code (IN) from the back of the device. No spaces, all lower case</description>
+			</parameter>
+		</config-description>
+	</bridge-type>
+	<thing-type id="eagle200_electric_meter">
+		<supported-bridge-type-refs>
+			<bridge-type-ref id="eagle200_bridge" />
+		</supported-bridge-type-refs>
+		<label>Eagle 200 Electric Meter</label>
+		<description>Electric meter bridged by the Eagle 200</description>
+		<config-description>
+			<parameter name="hwaddress" type="text" required="true">
+				<label>the hardware address of the meter</label>
+				<description>the hardware address of the meter</description>
+			</parameter>
+			<parameter name="frequency" type="integer" required="false">
+				<label>scan period</label>
+				<description>scan period in seconds</description>
+			</parameter>
+		</config-description>
+	</thing-type>
+</thing:thing-descriptions>
