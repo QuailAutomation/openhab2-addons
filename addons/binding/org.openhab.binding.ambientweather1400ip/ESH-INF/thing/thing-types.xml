@@ -9,23 +9,23 @@
 		<description>Ambient Weather 1400 IP</description>
 
 		<channels>
-            <channel id="indoor_temp" typeId="temp_chan"/>
-            <channel id="outdoor_temp" typeId="temp_chan"/>
-            <channel id="indoor_humidity" typeId="humidity_chan"/>
-            <channel id="outdoor_humidity" typeId="humidity_chan"/>
-            <channel id="abs_pressure" typeId="pressure_chan"/>
-            <channel id="rel_pressure" typeId="pressure_chan"/>
+            <channel id="indoor_temp" typeId="temp_chan_indoor"/>
+            <channel id="outdoor_temp" typeId="temp_chan_outdoor"/>
+            <channel id="indoor_humidity" typeId="humidity_chan_indoor"/>
+            <channel id="outdoor_humidity" typeId="humidity_chan_outdoor"/>
+            <channel id="abs_pressure" typeId="pressure_chan_abs"/>
+            <channel id="rel_pressure" typeId="pressure_chan_rel"/>
             <channel id="wind_direction" typeId="direction_chan"/>
-            <channel id="wind_speed" typeId="speed_chan"/>
-            <channel id="wind_gust" typeId="speed_chan"/>
+            <channel id="wind_speed" typeId="speed_chan_avg"/>
+            <channel id="wind_gust" typeId="speed_chan_gust"/>
             <channel id="solar_radiation" typeId="radiation_chan"/>
             <channel id="uv" typeId="uv_chan"/>
             <channel id="uvi" typeId="uv_chan"/>
-            <channel id="hourly_rain" typeId="rain_chan"/>
-            <channel id="daily_rain" typeId="rain_chan"/>
-            <channel id="weekly_rain" typeId="rain_chan"/>
-            <channel id="monthly_rain" typeId="rain_chan"/>
-            <channel id="yearly_rain" typeId="rain_chan"/>
+            <channel id="hourly_rain" typeId="rain_chan_hourly"/>
+            <channel id="daily_rain" typeId="rain_chan_daily"/>
+            <channel id="weekly_rain" typeId="rain_chan_weekly"/>
+            <channel id="monthly_rain" typeId="rain_chan_monthly"/>
+            <channel id="yearly_rain" typeId="rain_chan_yearly"/>
 		</channels>
 
         <config-description>
@@ -42,24 +42,45 @@
         </config-description>
 	</thing-type>
 
-    <channel-type id="temp_chan">
+    <channel-type id="temp_chan_indoor">
         <item-type>Number</item-type>
-        <label>Temperature</label>
-        <description>Current Temperature</description>
+        <label>Indoor Temperature</label>
+        <description>Current Temperature Indoor</description>
         <category>Thermostat</category>
         <state pattern="%.1f °F" readOnly="true"/>
     </channel-type>
-    <channel-type id="humidity_chan">
+    <channel-type id="temp_chan_outdoor">
         <item-type>Number</item-type>
-        <label>Humidity</label>
-        <description>Current Humidity</description>
+        <label>Outdoor Temperature</label>
+        <description>Current Temperature Outdoor</description>
+        <category>Thermostat</category>
+        <state pattern="%.1f °F" readOnly="true"/>
+    </channel-type>
+    <channel-type id="humidity_chan_indoor">
+        <item-type>Number</item-type>
+        <label>Indoor Humidity</label>
+        <description>Current Humidity Indoor</description>
         <category>Thermostat</category>
         <state pattern="%.1f %" readOnly="true"/>
     </channel-type>
-    <channel-type id="pressure_chan">
+    <channel-type id="humidity_chan_outdoor">
         <item-type>Number</item-type>
-        <label>Pressure</label>
-        <description>Current Pressure</description>
+        <label>Outdoor Humidity</label>
+        <description>Current Humidity Outdoor</description>
+        <category>Thermostat</category>
+        <state pattern="%.1f %" readOnly="true"/>
+    </channel-type>
+    <channel-type id="pressure_chan_abs">
+        <item-type>Number</item-type>
+        <label>Absolute Pressure</label>
+        <description>Absolute Current Pressure</description>
+        <category>Thermostat</category>
+        <state pattern="%.1f hg" readOnly="true"/>
+    </channel-type>
+    <channel-type id="pressure_chan_rel">
+        <item-type>Number</item-type>
+        <label>Relative Pressure</label>
+        <description>Relative Current Pressure</description>
         <category>Thermostat</category>
         <state pattern="%.1f hg" readOnly="true"/>
     </channel-type>
@@ -84,17 +105,52 @@
         <category>Thermostat</category>
         <state pattern="%.1f" readOnly="true"/>
     </channel-type>
-    <channel-type id="speed_chan">
+    <channel-type id="speed_chan_avg">
         <item-type>Number</item-type>
         <label>Wind Speed</label>
         <description>Wind Speed</description>
         <category>Thermostat</category>
         <state pattern="%.1f mph" readOnly="true"/>
     </channel-type>
-    <channel-type id="rain_chan">
+    <channel-type id="speed_chan_gust">
         <item-type>Number</item-type>
-        <label>Rain Rate</label>
-        <description>Rain Rate</description>
+        <label>Wind Gust Speed</label>
+        <description>Wind Gust Speed</description>
+        <category>Thermostat</category>
+        <state pattern="%.1f mph" readOnly="true"/>
+    </channel-type>
+    <channel-type id="rain_chan_hourly">
+        <item-type>Number</item-type>
+        <label>Hourly Rain Rate</label>
+        <description>Hourly Rain Rate</description>
+        <category>Thermostat</category>
+        <state pattern="%.1f inches" readOnly="true"/>
+    </channel-type>
+    <channel-type id="rain_chan_daily">
+        <item-type>Number</item-type>
+        <label>Daily Rain Rate</label>
+        <description>Daily Rain Rate</description>
+        <category>Thermostat</category>
+        <state pattern="%.1f inches" readOnly="true"/>
+    </channel-type>
+    <channel-type id="rain_chan_weekly">
+        <item-type>Number</item-type>
+        <label>Weekly Rain Rate</label>
+        <description>Weekly Rain Rate</description>
+        <category>Thermostat</category>
+        <state pattern="%.1f inches" readOnly="true"/>
+    </channel-type>
+    <channel-type id="rain_chan_monthly">
+        <item-type>Number</item-type>
+        <label>Monthly Rain Rate</label>
+        <description>Monthly Rain Rate</description>
+        <category>Thermostat</category>
+        <state pattern="%.1f inches" readOnly="true"/>
+    </channel-type>
+    <channel-type id="rain_chan_yearly">
+        <item-type>Number</item-type>
+        <label>Yearly Rain Rate</label>
+        <description>Yearly Rain Rate</description>
         <category>Thermostat</category>
         <state pattern="%.1f inches" readOnly="true"/>
     </channel-type>

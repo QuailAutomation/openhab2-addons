@@ -97,18 +97,20 @@ public class AmbientWeather1400IPHandler extends BaseThingHandler {
             @Override
             public void run() {
                 try {
+                    long start = System.currentTimeMillis();
                     String webResponse = AmbientWeather1400IPHandler.this.callWebUpdate();
+                    logger.trace("AmbientWeather1400 gateway call took {} msec", (System.currentTimeMillis() - start));
                     // in case we come back from an outage -> set status online
                     if (!getThing().getStatus().equals(ThingStatus.ONLINE)) {
                         updateStatus(ThingStatus.ONLINE);
                     }
                     AmbientWeather1400IPHandler.this.parseAndUpdate(webResponse);
-                } catch (Exception e) {
-                    logger.error(e.getLocalizedMessage());
+                } catch (Throwable e) {
+                    logger.error(e.getMessage());
                     if (!getThing().getStatus().equals(ThingStatus.OFFLINE)) {
                         String msg = "Unable to reach '" + hostname
                                 + "', please check that the 'hostname/ip' setting is correct, or if there is a network problem. Detailed error: '";
-                        msg += e.getLocalizedMessage() + "'";
+                        msg += e.getMessage() + "'";
                         updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.COMMUNICATION_ERROR, msg);
                     }
                 }
@@ -119,7 +121,7 @@ public class AmbientWeather1400IPHandler extends BaseThingHandler {
     @Override
     public void initialize() {
 
-        if (this.poller != null) {
+        if (this.poller != null && !this.poller.isDone()) {
             logger.debug("leftover poller task still running, attempting to cancel");
             this.poller.cancel(true);
         }
@@ -139,7 +141,7 @@ public class AmbientWeather1400IPHandler extends BaseThingHandler {
         if (freq == null) {
             freq = new BigDecimal(60);
         }
-        this.scanrate = freq.intValue();
+        this.setScanrate(freq.intValue());
 
         this.createChannel(INDOOR_TEMP, DecimalType.class, "inTemp");
         this.createChannel(OUTDOOR_TEMP, DecimalType.class, "outTemp");
@@ -163,13 +165,12 @@ public class AmbientWeather1400IPHandler extends BaseThingHandler {
         this.updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.CONFIGURATION_PENDING,
                 "Contacting weather station...");
 
-        this.poller = this.scheduler.scheduleWithFixedDelay(this.updatetask, 1, this.scanrate, TimeUnit.SECONDS);
+        this.poller = this.scheduler.scheduleWithFixedDelay(this.updatetask, 1, this.getScanrate(), TimeUnit.SECONDS);
     }
 
     @SuppressWarnings("null")
     @Override
     public void handleConfigurationUpdate(@NonNull Map<@NonNull String, @NonNull Object> config) {
-        super.handleConfigurationUpdate(config);
 
         boolean changed = false;
 
@@ -180,8 +181,8 @@ public class AmbientWeather1400IPHandler extends BaseThingHandler {
         }
 
         BigDecimal scanrate_new = (BigDecimal) config.get(AmbientWeather1400IPBindingConstants.CONFIG_SCANRATE);
-        if (scanrate_new != null && this.scanrate != scanrate_new.intValue()) {
-            this.scanrate = scanrate_new.intValue();
+        if (scanrate_new != null && this.getScanrate() != scanrate_new.intValue()) {
+            this.setScanrate(scanrate_new.intValue());
             changed = true;
         }
 
@@ -189,7 +190,8 @@ public class AmbientWeather1400IPHandler extends BaseThingHandler {
             if (this.poller != null && !this.poller.isDone()) {
                 this.poller.cancel(true);
             }
-            this.poller = this.scheduler.scheduleWithFixedDelay(this.updatetask, 1, this.scanrate, TimeUnit.SECONDS);
+            this.poller = this.scheduler.scheduleWithFixedDelay(this.updatetask, 1, this.getScanrate(),
+                    TimeUnit.SECONDS);
         }
     }
 
@@ -237,6 +239,14 @@ public class AmbientWeather1400IPHandler extends BaseThingHandler {
         } finally {
             IOUtils.closeQuietly(connection.getInputStream());
         }
+    }
+
+    private long getScanrate() {
+        return this.scanrate;
+    }
+
+    private void setScanrate(int value) {
+        this.scanrate = value;
     }
 
     @SuppressWarnings("null")
