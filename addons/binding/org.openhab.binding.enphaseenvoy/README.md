@@ -12,7 +12,7 @@ The binding should be able to discover the Envoy via mDNS/Bonjour on the local n
 
 ## Binding Configuration
 
-All necessary configuration parameters should be discovered via the discovery process. If this for some reason fails, the Envoy bridge can be configured manually. The scan frequency can also be set, it defaults to 60 seconds. It appears the device becomes unstable when scanning at shorter intervals than 15 seconds.
+All necessary configuration parameters should be discovered via the discovery process. If this for some reason fails, the Envoy bridge can be configured manually. The scan frequency can also be set, it defaults to 5 minutes (300 seconds). Since the internal update of the device is 15 minutes, it doesn't make much sense to scan at a high rate. It appears the device becomes unstable when scanning at shorter intervals than 15 seconds.
 
 ## Thing Configuration
 
