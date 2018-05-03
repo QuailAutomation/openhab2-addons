@@ -5,6 +5,8 @@ This is the binding for the Ambient Weather WS-1400IP weather station, via local
 ## Supported Things
 
 Ambient Weather WS-1400IP weather station locally via the IPObserver module (not thru Weather Underground clouds etc)
+
+
 ![Alt Ambient Weather IPObserver module](web/ipobserver.png?raw=true "Ambient Weather IPObserver module")
 
 ## Discovery
