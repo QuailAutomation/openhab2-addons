@@ -20,6 +20,11 @@ The Inverter things have nothing to configure
 
 ## Channels
 
-There are four channels for a system summary on the bridge thing
-Four more channels on each Inverter thing.
+There are four channels for a system summary on the bridge
+
+![Alt Eagle 200 bridge channels](web/bridge_channels.png?raw=true "Eagle 200 bridge channels")
+
+Four channels on each inverter
+
+![Alt Eagle 200 inverter channels](web/inverter_channels.png?raw=true "Eagle 200 inverter channels")
 
