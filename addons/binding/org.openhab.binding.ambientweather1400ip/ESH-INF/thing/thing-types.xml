@@ -26,6 +26,8 @@
             <channel id="weekly_rain" typeId="rain_chan_weekly"/>
             <channel id="monthly_rain" typeId="rain_chan_monthly"/>
             <channel id="yearly_rain" typeId="rain_chan_yearly"/>
+            <channel id="battery_out" typeId="battery_outdoor"/>
+            <channel id="battery_in" typeId="battery_indoor"/>
 		</channels>
 
         <config-description>
@@ -153,6 +155,20 @@
         <description>Yearly Rain Rate</description>
         <category>Thermostat</category>
         <state pattern="%.1f inches" readOnly="true"/>
+    </channel-type>
+    <channel-type id="battery_outdoor">
+        <item-type>String</item-type>
+        <label>Outdoor Battery</label>
+        <description>Outdoor Battery Status</description>
+        <category>Battery</category>
+        <state readOnly="true"/>
+    </channel-type>
+    <channel-type id="battery_indoor">
+        <item-type>String</item-type>
+        <label>Indoor Battery</label>
+        <description>Indoor Battery Status</description>
+        <category>Battery</category>
+        <state readOnly="true"/>
     </channel-type>
 
 </thing:thing-descriptions>

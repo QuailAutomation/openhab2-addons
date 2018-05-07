@@ -47,6 +47,8 @@ public class AmbientWeather1400IPBindingConstants {
     public static final String WEEKLY_RAIN = "weekly_rain";
     public static final String MONTHLY_RAIN = "monthly_rain";
     public static final String YEARLY_RAIN = "yearly_rain";
+    public static final String BATTERY_IN = "battery_in";
+    public static final String BATTERY_OUT = "battery_out";
 
     public static final String CONFIG_HOSTNAME = "hostname";
     public static final String CONFIG_SCANRATE = "scanrate";

@@ -27,6 +27,7 @@ import java.util.concurrent.TimeUnit;
 import org.apache.commons.io.IOUtils;
 import org.eclipse.jdt.annotation.NonNull;
 import org.eclipse.smarthome.core.library.types.DecimalType;
+import org.eclipse.smarthome.core.library.types.StringType;
 import org.eclipse.smarthome.core.thing.Channel;
 import org.eclipse.smarthome.core.thing.ChannelUID;
 import org.eclipse.smarthome.core.thing.Thing;
@@ -160,6 +161,8 @@ public class AmbientWeather1400IPHandler extends BaseThingHandler {
         this.createChannel(WEEKLY_RAIN, DecimalType.class, "rainofweekly");
         this.createChannel(MONTHLY_RAIN, DecimalType.class, "rainofmonthly");
         this.createChannel(YEARLY_RAIN, DecimalType.class, "rainofyearly");
+        this.createChannel(BATTERY_OUT, StringType.class, "outBattSta1");
+        this.createChannel(BATTERY_IN, StringType.class, "inBattSta");
 
         // stay offline, the poller will figure the right state in a sec...
         this.updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.CONFIGURATION_PENDING,
