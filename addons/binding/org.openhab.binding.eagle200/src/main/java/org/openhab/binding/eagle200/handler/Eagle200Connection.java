@@ -107,6 +107,7 @@ public class Eagle200Connection {
         String cmd = QUERY_CMD_1 + meterAddr + QUERY_CMD_2;
         String xml = this.doPost(cmd);
         logger.trace("Eagle200 meter query " + meterAddr + ": " + xml);
+        xml = xml.replaceAll(" & ", " &amp; ");
         this.xStream.processAnnotations(QueryModel);
         DeviceQuery reply = (DeviceQuery) xStream.fromXML(xml);
         List<Variable> vars = reply.getComponents().getComponents().get(0).getVariables().getVariables();
