@@ -51,6 +51,11 @@ public class IsyBindingConstants {
 
     public final static ThingTypeUID UNRECOGNIZED_SWITCH_THING_TYPE = new ThingTypeUID(BINDING_ID, "unrecognized");
 
+    public final static String BRIDGE_CONFIG_IPADDRESS = "ipAddress";
+    public final static String BRIDGE_CONFIG_SERIALNUMBER = "serial";
+    public final static String BRIDGE_CONFIG_USER = "user";
+    public final static String BRIDGE_CONFIG_PASSWORD = "password";
+
     // List of all Channel ids
     // public final static String CHANNEL_ONOFFSENSOR = "OL";
     public final static String CHANNEL_DIMMERLEVEL = "loadlevel";

@@ -88,8 +88,10 @@ public class IsyBridgeHandler extends BaseBridgeHandler implements InsteonClient
     @Override
     public void dispose() {
         logger.trace("Dispose called");
-        eventSubscriber.disconnect();
-        eventSubscriber = null;
+        if (this.eventSubscriber != null) {
+            eventSubscriber.disconnect();
+            eventSubscriber = null;
+        }
     }
 
     private IsyVariableHandler getVariableHandler(VariableType type, int id) {
