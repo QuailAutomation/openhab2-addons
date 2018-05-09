@@ -9,6 +9,7 @@ public abstract class AbtractIsyThingHandler extends BaseThingHandler {
         super(thing);
     }
 
+    @SuppressWarnings("null")
     protected IsyBridgeHandler getBridgeHandler() {
         return (IsyBridgeHandler) getBridge().getHandler();
     }

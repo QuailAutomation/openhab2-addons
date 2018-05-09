@@ -111,6 +111,10 @@ public class IsyRestDiscoveryService extends AbstractDiscoveryService {
         bridgeHandler.unregisterDiscoveryService();
     }
 
+    public ThingTypeUID getTypeUIDFromISYType(String isyType) {
+        return this.mMapDeviceTypeThingType.get(isyType);
+    }
+
     @Override
     protected void startScan() {
         try {
@@ -142,53 +146,62 @@ public class IsyRestDiscoveryService extends AbstractDiscoveryService {
 
     private void discoverPrograms() {
         OHIsyClient insteon = this.bridgeHandler.getInsteonClient();
-        Map<String, Object> properties = null;
-        ThingUID bridgeUID = this.bridgeHandler.getThing().getUID();
         for (Program program : insteon.getPrograms()) {
-            logger.debug("discovered program: " + program);
-            properties = new HashMap<>(0);
-            properties.put(IsyProgramConfiguration.ID, program.getId());
-            properties.put(IsyProgramConfiguration.NAME, program.getName());
-
-            ThingTypeUID theThingTypeUid = IsyBindingConstants.PROGRAM_THING_TYPE;
-            String thingID = removeInvalidUidChars(program.getId());
-            ThingUID thingUID = new ThingUID(theThingTypeUid, bridgeUID, thingID);
-            DiscoveryResult discoveryResult = DiscoveryResultBuilder.create(thingUID).withBridge(bridgeUID)
-                    .withProperties(properties).withBridge(bridgeUID).withLabel(program.getName()).build();
-            thingDiscovered(discoveryResult);
-
-            // TODO remove
-            // logger.warn("Only discovering 1 program per scan for now, until more program functionality exists");
+            discoverProgram(program);
         }
     }
 
-    private static String removeInvalidUidChars(String original) {
+    /**
+     * @param program
+     */
+    public void discoverProgram(Program program) {
+        logger.debug("discovered program: " + program);
+        Map<String, Object> properties = new HashMap<>(0);
+        properties.put(IsyProgramConfiguration.ID, program.getId());
+        properties.put(IsyProgramConfiguration.NAME, program.getName());
+
+        ThingUID bridgeUID = this.bridgeHandler.getThing().getUID();
+        ThingTypeUID theThingTypeUid = IsyBindingConstants.PROGRAM_THING_TYPE;
+        String thingID = removeInvalidUidChars(program.getId());
+        ThingUID thingUID = new ThingUID(theThingTypeUid, bridgeUID, thingID);
+        DiscoveryResult discoveryResult = DiscoveryResultBuilder.create(thingUID).withBridge(bridgeUID)
+                .withProperties(properties).withBridge(bridgeUID).withLabel(program.getName()).build();
+        thingDiscovered(discoveryResult);
+    }
+
+    public static String removeInvalidUidChars(String original) {
         return original.replace(" ", "_").replace(":", "");
     }
 
     private void discoverScenes() {
         OHIsyClient insteon = this.bridgeHandler.getInsteonClient();
-        Map<String, Object> properties = null;
-        ThingUID bridgeUID = this.bridgeHandler.getThing().getUID();
         for (Scene scene : insteon.getScenes()) {
-            logger.debug("discovered scene: " + scene);
-            properties = new HashMap<>(0);
-            properties.put(IsyInsteonDeviceConfiguration.ADDRESS, scene.address);
-            logger.debug("scene address: {}", scene.address);
-            properties.put(IsyInsteonDeviceConfiguration.NAME, scene.name);
-            logger.debug("scene name: {}", scene.name);
-
-            this.bridgeHandler.getSceneMapper().addSceneConfig(scene.address, scene.links);
-            logger.debug("scene {} added {} links", scene.name, scene.links.size());
-
-            ThingTypeUID theThingTypeUid = IsyBindingConstants.SCENE_THING_TYPE;
-            String thingID = removeInvalidUidChars(scene.address);
-            logger.debug("scene address: {}", thingID);
-            ThingUID thingUID = new ThingUID(theThingTypeUid, bridgeUID, thingID);
-            DiscoveryResult discoveryResult = DiscoveryResultBuilder.create(thingUID).withBridge(bridgeUID)
-                    .withProperties(properties).withBridge(bridgeUID).withLabel(scene.name).build();
-            thingDiscovered(discoveryResult);
+            discoverScene(scene);
         }
+    }
+
+    /**
+     * @param scene
+     */
+    public void discoverScene(Scene scene) {
+        logger.debug("discovered scene: " + scene);
+        Map<String, Object> properties = new HashMap<>(0);
+        properties.put(IsyInsteonDeviceConfiguration.ADDRESS, scene.address);
+        logger.debug("scene address: {}", scene.address);
+        properties.put(IsyInsteonDeviceConfiguration.NAME, scene.name);
+        logger.debug("scene name: {}", scene.name);
+
+        this.bridgeHandler.getSceneMapper().addSceneConfig(scene.address, scene.links);
+        logger.debug("scene {} added {} links", scene.name, scene.links.size());
+
+        ThingUID bridgeUID = this.bridgeHandler.getThing().getUID();
+        ThingTypeUID theThingTypeUid = IsyBindingConstants.SCENE_THING_TYPE;
+        String thingID = removeInvalidUidChars(scene.address);
+        logger.debug("scene address: {}", thingID);
+        ThingUID thingUID = new ThingUID(theThingTypeUid, bridgeUID, thingID);
+        DiscoveryResult discoveryResult = DiscoveryResultBuilder.create(thingUID).withBridge(bridgeUID)
+                .withProperties(properties).withBridge(bridgeUID).withLabel(scene.name).build();
+        thingDiscovered(discoveryResult);
     }
 
     private void discoverVariables() {
@@ -198,67 +211,72 @@ public class IsyRestDiscoveryService extends AbstractDiscoveryService {
 
     private void discoverVariablesForType(VariableType variableType) {
         OHIsyClient insteon = this.bridgeHandler.getInsteonClient();
-        Map<String, Object> properties = null;
-        ThingUID bridgeUID = this.bridgeHandler.getThing().getUID();
         List<StateVariable> variableList = insteon.getVariableDefinitions(variableType).getStateVariables();
         if (variableList != null) {
             for (StateVariable variable : variableList) {
-                logger.debug("discovered variable, id:{}, name: {} ", variable.getId(), variable.getName());
-                properties = new HashMap<>(0);
-                properties.put(IsyVariableConfiguration.ID, variable.getId());
-                properties.put(IsyVariableConfiguration.TYPE, variableType.getType());
-
-                String typeAsText = variableType.equals(VariableType.INTEGER) ? "integer" : "state";
-
-                ThingTypeUID theThingTypeUid = IsyBindingConstants.VARIABLE_THING_TYPE;
-                String thingID = typeAsText + "_" + variable.getId();
-                ThingUID thingUID = new ThingUID(theThingTypeUid, bridgeUID, thingID);
-                DiscoveryResult discoveryResult = DiscoveryResultBuilder.create(thingUID).withBridge(bridgeUID)
-                        .withProperties(properties).withBridge(bridgeUID).withLabel(variable.getName()).build();
-                thingDiscovered(discoveryResult);
+                discoverVariable(variableType, variable);
             }
         }
+    }
+
+    /**
+     * @param variableType
+     * @param variable
+     */
+    public void discoverVariable(VariableType variableType, StateVariable variable) {
+        logger.debug("discovered variable, id:{}, name: {} ", variable.getId(), variable.getName());
+        Map<String, Object> properties = new HashMap<>(0);
+        properties.put(IsyVariableConfiguration.ID, variable.getId());
+        properties.put(IsyVariableConfiguration.TYPE, variableType.getType());
+
+        String typeAsText = variableType.equals(VariableType.INTEGER) ? "integer" : "state";
+
+        ThingUID bridgeUID = this.bridgeHandler.getThing().getUID();
+        ThingTypeUID theThingTypeUid = IsyBindingConstants.VARIABLE_THING_TYPE;
+        String thingID = typeAsText + "_" + variable.getId();
+        ThingUID thingUID = new ThingUID(theThingTypeUid, bridgeUID, thingID);
+        DiscoveryResult discoveryResult = DiscoveryResultBuilder.create(thingUID).withBridge(bridgeUID)
+                .withProperties(properties).withBridge(bridgeUID).withLabel(variable.getName()).build();
+        thingDiscovered(discoveryResult);
     }
 
     private void discoverNodes() {
         logger.debug("startScan called for Isy");
-        Map<String, Object> properties = null;
         OHIsyClient insteon = this.bridgeHandler.getInsteonClient();
-        ThingUID bridgeUID = this.bridgeHandler.getThing().getUID();
         logger.debug("retrieving nodes");
         List<Node> nodes = insteon.getNodes();
         logger.debug("found nodes(#): " + nodes.size());
         for (Node node : nodes) {
-            logger.debug("Parsing address: {}", node.getAddress());
-            NodeAddress nodeAddress;
-            try {
-                nodeAddress = NodeAddress.parseAddressString(node.getAddress());
-            } catch (Exception e) {
-                logger.info("Error parsing address: {}", node.getAddress(), e);
-                continue;
-            }
-
-            properties = new HashMap<>(0);
-            properties.put(IsyInsteonDeviceConfiguration.ADDRESS, nodeAddress.toStringNoDeviceId());
-            properties.put(IsyInsteonDeviceConfiguration.NAME, node.getName());
-            properties.put(IsyInsteonDeviceConfiguration.DEVICEID, node.getTypeReadable());
-
-            if (nodeAddress.getDeviceId() == 1) {
-                ThingTypeUID theThingTypeUid = mMapDeviceTypeThingType.get(node.getTypeReadable());
-                if (theThingTypeUid == null) {
-                    logger.warn("Unsupported insteon node, name: " + node.getName() + ", type: "
-                            + node.getTypeReadable() + ", address: " + node.getAddress());
-                    theThingTypeUid = IsyBindingConstants.UNRECOGNIZED_SWITCH_THING_TYPE;
-                }
-
-                String thingID = removeInvalidUidChars(nodeAddress.toStringNoDeviceId());
-                ThingUID thingUID = new ThingUID(theThingTypeUid, bridgeUID, thingID);
-                DiscoveryResult discoveryResult = DiscoveryResultBuilder.create(thingUID).withBridge(bridgeUID)
-                        .withProperties(properties).withBridge(bridgeUID).withLabel(node.getName()).build();
-                thingDiscovered(discoveryResult);
-
-            }
+            discoverNode(node);
         }
     }
 
+    /**
+     * @param node
+     */
+    public void discoverNode(Node node) {
+        logger.debug("Parsing address: {}", node.getAddress());
+        NodeAddress nodeAddress = NodeAddress.parseAddressString(node.getAddress());
+
+        Map<String, Object> properties = new HashMap<>(0);
+        properties.put(IsyInsteonDeviceConfiguration.ADDRESS, nodeAddress.toStringNoDeviceId());
+        properties.put(IsyInsteonDeviceConfiguration.NAME, node.getName());
+        properties.put(IsyInsteonDeviceConfiguration.DEVICEID, node.getTypeReadable());
+
+        if (nodeAddress.getDeviceId() == 1) {
+            ThingUID bridgeUID = this.bridgeHandler.getThing().getUID();
+            ThingTypeUID theThingTypeUid = mMapDeviceTypeThingType.get(node.getTypeReadable());
+            if (theThingTypeUid == null) {
+                logger.warn("Unsupported insteon node, name: " + node.getName() + ", type: " + node.getTypeReadable()
+                        + ", address: " + node.getAddress());
+                theThingTypeUid = IsyBindingConstants.UNRECOGNIZED_SWITCH_THING_TYPE;
+            }
+
+            String thingID = removeInvalidUidChars(nodeAddress.toStringNoDeviceId());
+            ThingUID thingUID = new ThingUID(theThingTypeUid, bridgeUID, thingID);
+            DiscoveryResult discoveryResult = DiscoveryResultBuilder.create(thingUID).withBridge(bridgeUID)
+                    .withProperties(properties).withBridge(bridgeUID).withLabel(node.getName()).build();
+            thingDiscovered(discoveryResult);
+        }
+    }
 }

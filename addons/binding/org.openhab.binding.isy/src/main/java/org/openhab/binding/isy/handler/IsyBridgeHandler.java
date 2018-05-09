@@ -1,6 +1,8 @@
 package org.openhab.binding.isy.handler;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
@@ -10,6 +12,8 @@ import org.eclipse.smarthome.core.thing.Bridge;
 import org.eclipse.smarthome.core.thing.ChannelUID;
 import org.eclipse.smarthome.core.thing.Thing;
 import org.eclipse.smarthome.core.thing.ThingStatus;
+import org.eclipse.smarthome.core.thing.ThingStatusDetail;
+import org.eclipse.smarthome.core.thing.ThingStatusInfo;
 import org.eclipse.smarthome.core.thing.binding.BaseBridgeHandler;
 import org.eclipse.smarthome.core.thing.binding.ThingHandler;
 import org.eclipse.smarthome.core.types.Command;
@@ -27,6 +31,7 @@ import org.openhab.binding.isy.internal.Scene;
 import org.openhab.binding.isy.internal.VariableType;
 import org.openhab.binding.isy.internal.protocol.Event;
 import org.openhab.binding.isy.internal.protocol.EventInfo;
+import org.openhab.binding.isy.internal.protocol.EventNode;
 import org.openhab.binding.isy.internal.protocol.Node;
 import org.openhab.binding.isy.internal.protocol.NodeInfo;
 import org.openhab.binding.isy.internal.protocol.Nodes;
@@ -54,7 +59,7 @@ public class IsyBridgeHandler extends BaseBridgeHandler implements InsteonClient
     private String testXmlNodeUpdate = "<?xml version=\"1.0\"?><Event seqnum=\"1602\" sid=\"uuid:74\"><control>ST</control><action>255</action><node>28 C1 F3 1</node><eventInfo></eventInfo></Event>";
     private Logger logger = LoggerFactory.getLogger(IsyBridgeHandler.class);
 
-    private DiscoveryService bridgeDiscoveryService;
+    private IsyRestDiscoveryService bridgeDiscoveryService;
 
     private IsyRestClient isyClient;
 
@@ -73,9 +78,9 @@ public class IsyBridgeHandler extends BaseBridgeHandler implements InsteonClient
         xStream.ignoreUnknownElements();
         xStream.setClassLoader(IsyRestDiscoveryService.class.getClassLoader());
         xStream.processAnnotations(new Class[] { Properties.class, Property.class, Event.class, EventInfo.class,
-                ZoneEvent.class, AreaEvent.class, VariableList.class, StateVariable.class, VariableEvent.class,
-                SubscriptionResponse.class, Topology.class, Zone.class, ElkStatus.class, Areas.class, Area.class,
-                Node.class, Nodes.class, NodeInfo.class });
+                EventNode.class, ZoneEvent.class, AreaEvent.class, VariableList.class, StateVariable.class,
+                VariableEvent.class, SubscriptionResponse.class, Topology.class, Zone.class, ElkStatus.class,
+                Areas.class, Area.class, Node.class, Nodes.class, NodeInfo.class });
 
         this.sceneMapper = new DeviceToSceneMapper(this);
     }
@@ -127,62 +132,15 @@ public class IsyBridgeHandler extends BaseBridgeHandler implements InsteonClient
             this.getSceneMapper().addSceneConfig(scene.address, scene.links);
         }
 
+        ISYModelChangeListener modelListener = new IsyListener();
         this.eventSubscriber = new IsyWebSocketSubscription(config.getIpAddress(), authorizationHeaderValue,
-                new ISYModelChangeListener() {
-
-                    @Override
-                    public void onModelChanged(Event event) {
-                        logger.debug("onModelChanged called, node: {}, control: {}, action: {}, var event: {}",
-                                event.getNode(), event.getControl(), event.getAction(),
-                                event.getEventInfo().getVariableEvent());
-                        IsyDeviceHandler handler = null;
-                        Set<SceneHandler> sceneHandlers = null;
-                        if (!"".equals(event.getNode())) {
-                            handler = getThingHandler(event.getNode());
-                            sceneHandlers = sceneMapper.getSceneHandlerFor(event.getNode());
-                        }
-                        if (handler != null) {
-                            handler.handleUpdate(event.getControl(), event.getAction(), event.getNode());
-                        }
-                        if (sceneHandlers != null) {
-                            for (SceneHandler sceneHandler : sceneHandlers) {
-                                sceneHandler.handleUpdate(event.getControl(), event.getAction(), event.getNode());
-                            }
-                        }
-                    }
-
-                    @Override
-                    public void onDeviceOnLine() {
-                        logger.debug("Received onDeviceOnLine message");
-                        updateStatus(ThingStatus.ONLINE);
-                    }
-
-                    @Override
-                    public void onDeviceOffLine() {
-                        logger.debug("Received onDeviceOffLine message");
-                        updateStatus(ThingStatus.OFFLINE);
-                    }
-
-                    @Override
-                    public void onVariableChanged(VariableEvent event) {
-                        logger.debug("need to find variable handler, id is: {}, val: {}", event.getId(),
-                                event.getVal());
-                        IsyVariableHandler handler = getVariableHandler(VariableType.fromInt(event.getType()),
-                                event.getId());
-                        if (handler != null) {
-                            handler.handleUpdate(event.getVal());
-                        }
-                    }
-                }, xStream);
+                modelListener, xStream);
         this.eventSubscriber.connect();
-
         this.updateStatus(ThingStatus.ONLINE);
-
     }
 
     public void registerDiscoveryService(DiscoveryService isyBridgeDiscoveryService) {
-        this.bridgeDiscoveryService = isyBridgeDiscoveryService;
-
+        this.bridgeDiscoveryService = (IsyRestDiscoveryService) isyBridgeDiscoveryService;
     }
 
     public void unregisterDiscoveryService() {
@@ -245,5 +203,210 @@ public class IsyBridgeHandler extends BaseBridgeHandler implements InsteonClient
         }
         logger.debug("getHandlerForInsteonAddress: no handler found for address {}", address);
         return null;
+    }
+
+    class IsyListener implements ISYModelChangeListener {
+
+        @Override
+        public void onDeviceOnLine() {
+            logger.debug("Received onDeviceOnLine message");
+            updateStatus(ThingStatus.ONLINE);
+        }
+
+        @Override
+        public void onDeviceOffLine() {
+            logger.debug("Received onDeviceOffLine message");
+            updateStatus(ThingStatus.OFFLINE);
+        }
+
+        @Override
+        public void onNodeAdded(Event event) {
+            String addr = event.getEventInfo().getNode().getAddress();
+            String type = event.getEventInfo().getNode().getType();
+            String name = event.getEventInfo().getNode().getName();
+            org.openhab.binding.isy.internal.Node node = new org.openhab.binding.isy.internal.Node(
+                    IsyRestClient.removeBadChars(name), addr, type);
+            logger.debug("ISY added node {} [{}], type {}", name, addr, type);
+            bridgeDiscoveryService.discoverNode(node);
+        }
+
+        @Override
+        public void onNodeChanged(Event event) {
+            logger.debug("onModelChanged called, node: {}, control: {}, action: {}, var event: {}", event.getNode(),
+                    event.getControl(), event.getAction(), event.getEventInfo().getVariableEvent());
+            IsyDeviceHandler handler = null;
+            Set<SceneHandler> sceneHandlers = null;
+            if (!"".equals(event.getNode())) {
+                handler = getThingHandler(event.getNode());
+                sceneHandlers = sceneMapper.getSceneHandlerFor(event.getNode());
+            }
+            if (handler != null) {
+                handler.handleUpdate(event.getControl(), event.getAction(), event.getNode());
+            }
+            if (sceneHandlers != null) {
+                for (SceneHandler sceneHandler : sceneHandlers) {
+                    sceneHandler.handleUpdate(event.getControl(), event.getAction(), event.getNode());
+                }
+            }
+        }
+
+        @Override
+        public void onNodeRenamed(Event event) {
+            String newname = event.getEventInfo().getNewName();
+            NodeAddress nodeAddress = NodeAddress.parseAddressString(event.getNode());
+            String id = IsyRestDiscoveryService.removeInvalidUidChars(nodeAddress.toStringNoDeviceId());
+            logger.debug("ISY renamed node {} to [{}]", id, newname);
+            List<Thing> things = getThing().getThings();
+            for (Thing thing : things) {
+                String current = thing.getUID().getAsString();
+                if (current.contains(id)) {
+                    logger.debug("ISY rename for node {} found thing {}", id, current);
+                    thing.setLabel(newname);
+                    return;
+                }
+            }
+        }
+
+        @Override
+        public void onNodeRemoved(Event event) {
+            NodeAddress nodeAddress = NodeAddress.parseAddressString(event.getNode());
+            String id = IsyRestDiscoveryService.removeInvalidUidChars(nodeAddress.toStringNoDeviceId());
+            logger.debug("ISY removed node {}", id);
+            // cannot call rest interface at this point, the node is already gone
+            for (Thing thing : getThing().getThings()) {
+                String current = thing.getUID().getAsString();
+                if (current.contains(id)) {
+                    thing.setStatusInfo(new ThingStatusInfo(ThingStatus.OFFLINE, ThingStatusDetail.GONE,
+                            "Device was removed from ISY"));
+                    logger.debug("ISY remove for node {} found thing {}", id, current);
+                    return;
+                }
+            }
+        }
+
+        @Override
+        public void onSceneAdded(Event event) {
+            String addr = event.getNode();
+            String name = event.getEventInfo().getGroupName();
+            Scene scene = new Scene(name, addr, Collections.emptyList());
+            logger.debug("ISY added scene {} [{}]", name, addr);
+            bridgeDiscoveryService.discoverScene(scene);
+        }
+
+        @Override
+        public void onSceneLinkAdded(Event event) {
+            String id = event.getNode();
+            NodeAddress nodeAddress = NodeAddress.parseAddressString(event.getEventInfo().getMovedNode());
+            String link = IsyRestDiscoveryService.removeInvalidUidChars(nodeAddress.toStringNoDeviceId());
+
+            logger.debug("ISY added link {} to scene {}", link, id);
+
+            List<String> old = sceneMapper.getSceneConfig(id);
+            List<String> links = new ArrayList<String>();
+
+            if (links != null) {
+                links.addAll(old);
+            }
+            links.add(link);
+            sceneMapper.addSceneConfig(id, links);
+
+            // if the thing already exists (not just in inbox), then update the links
+            Thing t = null;
+            for (Thing thing : getThing().getThings()) {
+                String current = thing.getUID().getAsString();
+                if (current.contains(id)) {
+                    t = thing;
+                    break;
+                }
+            }
+            if (t == null) {
+                return;
+            }
+            ThingHandler handler = t.getHandler();
+            if (handler == null) {
+                return;
+            }
+
+            // reset/init the thing, which re-maps the links in the scene
+            logger.debug("ISY added link {} to scene {}, resetting thing {}", link, id, t.getUID().getAsString());
+            handler.thingUpdated(t);
+        }
+
+        @Override
+        public void onSceneLinkRemoved(Event event) {
+            String id = event.getNode();
+            NodeAddress nodeAddress = NodeAddress.parseAddressString(event.getEventInfo().getRemovedNode());
+            String link = IsyRestDiscoveryService.removeInvalidUidChars(nodeAddress.toStringNoDeviceId());
+            logger.debug("ISY removed link {} from scene {}", link, id);
+
+            List<String> old = sceneMapper.getSceneConfig(id);
+            if (old != null) {
+                List<String> links = new ArrayList<String>();
+                links.addAll(old);
+                links.remove(link);
+                sceneMapper.addSceneConfig(id, links);
+            }
+
+            Thing t = null;
+            for (Thing thing : getThing().getThings()) {
+                String current = thing.getUID().getAsString();
+                if (current.contains(id)) {
+                    t = thing;
+                    break;
+                }
+            }
+            if (t == null) {
+                return;
+            }
+            ThingHandler handler = t.getHandler();
+            if (handler == null) {
+                return;
+            }
+
+            // rest/init the thing, which re-maps the updated links in the scene
+            logger.debug("ISY removed link {} from scene {}, resetting thing {}", link, id, t.getUID().getAsString());
+            handler.thingUpdated(t);
+        }
+
+        @Override
+        public void onSceneRemoved(Event event) {
+            String id = event.getNode();
+            logger.debug("ISY removed scene {}", id);
+            // cannot call rest interface at this point, the node is already gone
+            for (Thing thing : getThing().getThings()) {
+                String current = thing.getUID().getAsString();
+                if (current.contains(id)) {
+                    logger.debug("ISY removed scene {} found thing {}", id, current);
+                    thing.setStatusInfo(new ThingStatusInfo(ThingStatus.OFFLINE, ThingStatusDetail.GONE,
+                            "Scene was removed from ISY"));
+                    return;
+                }
+            }
+        }
+
+        @Override
+        public void onSceneRenamed(Event event) {
+            String id = event.getNode();
+            String newname = event.getEventInfo().getNewName();
+            logger.debug("ISY renamed scene {} to {}", id, newname);
+            List<Thing> things = getThing().getThings();
+            for (Thing thing : things) {
+                String current = thing.getUID().getAsString();
+                if (current.contains(id)) {
+                    logger.debug("ISY renamed scene {} to {} found thing {}", id, newname, current);
+                    thing.setLabel(newname);
+                    return;
+                }
+            }
+        }
+
+        @Override
+        public void onVariableChanged(VariableEvent event) {
+            logger.debug("need to find variable handler, id is: {}, val: {}", event.getId(), event.getVal());
+            IsyVariableHandler handler = getVariableHandler(VariableType.fromInt(event.getType()), event.getId());
+            if (handler != null) {
+                handler.handleUpdate(event.getVal());
+            }
+        }
     }
 }

@@ -17,6 +17,8 @@ import org.eclipse.smarthome.core.thing.ThingTypeUID;
  */
 public class IsyBindingConstants {
 
+    public static final String UPNP_DISCOVERY_KEY = "isy 994i";
+
     public static final String BINDING_ID = "isy";
 
     public final static ThingTypeUID THING_TYPE_ISYBRIDGE = new ThingTypeUID(BINDING_ID, "isyBridge");

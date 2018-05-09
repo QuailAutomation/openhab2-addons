@@ -39,12 +39,12 @@ public class IsyUPNPDiscoveryParticipant implements UpnpDiscoveryParticipant {
         if (uid != null) {
             Map<String, Object> properties = new HashMap<>(2);
             properties.put(IsyBindingConstants.BRIDGE_CONFIG_IPADDRESS, device.getDetails().getBaseURL().getHost());
-            properties.put(IsyBindingConstants.BRIDGE_CONFIG_SERIALNUMBER,
-                    device.getIdentity().getUdn().getIdentifierString().replaceAll(":", "-"));
+            properties.put(IsyBindingConstants.BRIDGE_CONFIG_SERIALNUMBER, getUDNKeyAsString(device));
 
             DiscoveryResult result = DiscoveryResultBuilder.create(uid).withProperties(properties)
                     .withLabel(device.getDetails().getModelDetails().getModelName())
                     .withRepresentationProperty(IsyBindingConstants.BRIDGE_CONFIG_SERIALNUMBER).build();
+            logger.debug("UPNP discovery creating device " + result);
             return result;
         } else {
             return null;
@@ -55,20 +55,23 @@ public class IsyUPNPDiscoveryParticipant implements UpnpDiscoveryParticipant {
     public @Nullable ThingUID getThingUID(RemoteDevice device) {
         DeviceDetails details = device.getDetails();
         if (details != null) {
-            logger.debug("UPNP discovery got something with " + details.toString());
             ModelDetails modelDetails = details.getModelDetails();
             // ManufacturerDetails mfd = details.getManufacturerDetails();
             if (modelDetails != null) {
                 String modelName = modelDetails.getModelName();
-                logger.debug("UPNP model name is " + modelName);
                 if (modelName != null) {
-                    if (modelName.toLowerCase().startsWith("isy 994i")) {
-                        String id = device.getIdentity().getUdn().getIdentifierString().replaceAll(":", "-");
+                    if (modelName.toLowerCase().startsWith(IsyBindingConstants.UPNP_DISCOVERY_KEY)) {
+                        String id = getUDNKeyAsString(device);
+                        logger.debug("UPNP discovered ISY model {} with id {}", modelName, id);
                         return new ThingUID(IsyBindingConstants.THING_TYPE_ISYBRIDGE, id);
                     }
                 }
             }
         }
         return null;
+    }
+
+    private static String getUDNKeyAsString(RemoteDevice device) {
+        return device.getIdentity().getUdn().getIdentifierString().replaceAll(":", "-");
     }
 }
