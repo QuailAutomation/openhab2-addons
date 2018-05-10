@@ -1,0 +1,34 @@
+Automatic-Module-Name: org.openhab.binding.eagle200
+Manifest-Version: 1.0
+Bundle-ActivationPolicy: lazy
+Bundle-ClassPath: .,
+ lib/guava-18.0.jar,
+ lib/xstream-1.4.10.jar
+Bundle-ManifestVersion: 2
+Bundle-Name: Eagle200 Binding
+Bundle-RequiredExecutionEnvironment: JavaSE-1.8
+Bundle-SymbolicName: org.openhab.binding.eagle200;singleton:=true
+Bundle-Vendor: openHAB
+Bundle-Version: 2.3.0.qualifier
+Export-Package: 
+ org.openhab.binding.eagle200,
+ org.openhab.binding.eagle200.handler
+Import-Package: 
+ javax.jmdns,
+ org.eclipse.jdt.annotation;resolution:=optional,
+ org.eclipse.smarthome.config.core,
+ org.eclipse.smarthome.config.discovery,
+ org.eclipse.smarthome.config.discovery.mdns,
+ org.eclipse.smarthome.core.library.types,
+ org.eclipse.smarthome.core.thing,
+ org.eclipse.smarthome.core.thing.binding,
+ org.eclipse.smarthome.core.thing.binding.builder,
+ org.eclipse.smarthome.core.thing.events,
+ org.eclipse.smarthome.core.thing.type,
+ org.eclipse.smarthome.core.types,
+ org.eclipse.smarthome.core.util,
+ org.openhab.binding.eagle200,
+ org.openhab.binding.eagle200.handler,
+ org.slf4j
+Service-Component: OSGI-INF/*.xml
+Require-Bundle: org.eclipse.osgi

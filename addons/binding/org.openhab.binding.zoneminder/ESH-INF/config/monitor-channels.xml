@@ -1,23 +1,62 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<config-description:config-descriptions
-    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xmlns:config-description="http://eclipse.org/smarthome/schemas/config-description/v1.0.0"
-    xsi:schemaLocation="http://eclipse.org/smarthome/schemas/config-description/v1.0.0
+<config-description:config-descriptions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:config-description="http://eclipse.org/smarthome/schemas/config-description/v1.0.0"
+	xsi:schemaLocation="http://eclipse.org/smarthome/schemas/config-description/v1.0.0
         http://eclipse.org/smarthome/schemas/config-description-1.0.0.xsd">
-    <config-description uri="thing-type:monitor-channels:config">
-	    <parameter name="monitorId" type="integer" required="true">
-	       <label>Monitor ID</label>
-	       <description>The ID of the monitor in ZoneMinder</description>
-	    </parameter>
-	    <parameter name="monitorTriggerTimeout" type="integer" required="false" min="0" max="65335">
-	       <label>ForceAlarm timeout</label>
-	       <description>Timeout in seconds when activating alarm. Default is 60 seconds</description>
-	       <default>60</default>
-	    </parameter>
-	    <parameter name="monitorEventText" type="text" required="false" >
-	       <label>Event Text</label>
-	       <description>Event text in ZoneMinder</description>
-	       <default>Triggered from openHAB</default>
-	    </parameter>
-    </config-description>
+	<config-description uri="thing-type:monitor-channels:config">
+		<parameter-group name="imageConfig">
+			<context>imageConfig</context>
+			<label>Image/Video settings</label>
+		</parameter-group>
+		<parameter name="monitorId" type="integer" required="true">
+			<label>Monitor ID</label>
+			<description>The ID of the monitor in ZoneMinder</description>
+		</parameter>
+		<parameter name="monitorTriggerTimeout" type="integer" required="false" min="0" max="65335">
+			<label>ForceAlarm timeout</label>
+			<description>Timeout in seconds when activating alarm. Default is 60 seconds</description>
+			<default>60</default>
+		</parameter>
+		<parameter name="monitorEventText" type="text" required="false">
+			<label>Event Text</label>
+			<description>Event text in ZoneMinder</description>
+			<default>Triggered from openHAB</default>
+		</parameter>
+		<parameter name="max_image_size" type="integer" required="false" min="120" max="2160" groupName="imageConfig">
+			<label>Max Image Size</label>
+			<description>Max size for cam images/streams (either x or y, scaled to the bigger of the two).</description>
+			<default>400</default>
+		</parameter>
+
+		<parameter name="enable_image_updates" type="boolean" required="false" groupName="imageConfig">
+			<label>Enable JPG image updates</label>
+			<description>If enabled, the Image channel will be updated at the ZM update rate set in the ZM bridge setting</description>
+			<default>true</default>
+		</parameter>
+
+        <parameter name="video_encoding" type="text" required="false" groupName="imageConfig">
+            <label>Video Encoding</label>
+            <description>Encoding used for video - if mjpeg is used, make sure to also set [ encoding="mjpeg" ] in your sitemap's 'video' element!</description>
+            <default>mjpeg</default>
+            <options>
+                <option value="mjpeg">MJPEG</option>
+                <option value="ogg">OGG</option>
+                <option value="webm">WebM</option>
+                <option value="avi">AVI</option>
+                <option value="h264">H.264</option>
+            </options>
+        </parameter>
+
+        <parameter name="video_framerate" type="integer" required="false" groupName="imageConfig">
+            <label>Video Frame Rate (fps)</label>
+            <description>Video Frame Rate (video update rate)</description>
+            <default>1</default>
+            <options>
+                <option value="1">1 fps</option>
+                <option value="15">15 fps</option>
+                <option value="30">30 fps</option>
+            </options>
+        </parameter>
+
+	</config-description>
 </config-description:config-descriptions>

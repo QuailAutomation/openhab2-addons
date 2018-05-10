@@ -24,6 +24,8 @@
             <channel id="capture-daemon" typeId="monitor_zmc_daemon" />
             <channel id="analysis-daemon" typeId="monitor_zma_daemon" />
             <channel id="frame-daemon" typeId="monitor_zmf_daemon" />
+            <channel id="image" typeId="monitor_image_channel"/>
+            <channel id="videourl" typeId="monitor_videourl_channel"/>
         </channels>
 
         <config-description-ref uri="thing-type:monitor-channels:config" />
@@ -135,4 +137,15 @@
         <state readOnly="true"/>
     </channel-type>        
             
+    <channel-type id="monitor_image_channel">
+        <item-type>Image</item-type>
+        <label>Monitor Image</label>
+        <description>Image channel for Monitor</description>
+    </channel-type>
+
+    <channel-type id="monitor_videourl_channel">
+        <item-type>String</item-type>
+        <label>Monitor Video URL</label>
+        <description>Video URL for Monitor</description>
+    </channel-type>
 </thing:thing-descriptions>
