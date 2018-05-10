@@ -56,14 +56,12 @@ public class IsyWebSocketSubscription {
 
             @Override
             public void onWebSocketError(Throwable arg0) {
-                // TODO result needs to feed back to binding
                 logger.error("Error with websocket communication", arg0);
 
             }
 
             @Override
             public void onWebSocketConnect(Session arg0) {
-                // TODO result needs to feed back to binding
                 logger.debug("Socket Connected: " + arg0);
                 listener.onDeviceOnLine();
 
@@ -78,8 +76,6 @@ public class IsyWebSocketSubscription {
                 } catch (InterruptedException e) {
                     logger.error("Socket Interrupted", e);
                 }
-                // TODO: should not automatically reconnect, only attempt when bridge starts
-                // result of attempt needs to feed back to binding
                 logger.info("Reconnecting via Websocket to Isy.");
                 if (future != null) {
                     future.cancel(true);
@@ -90,7 +86,6 @@ public class IsyWebSocketSubscription {
 
             @Override
             public void onWebSocketBinary(byte[] arg0, int arg1, int arg2) {
-                // TODO result needs to feed back to binding
                 logger.warn("Unexpected binary data from websocket {}", arg0);
             }
         };

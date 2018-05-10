@@ -1,13 +1,16 @@
 package org.openhab.binding.isy.handler;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 
+import org.eclipse.jdt.annotation.Nullable;
 import org.eclipse.smarthome.config.discovery.DiscoveryService;
+import org.eclipse.smarthome.config.discovery.ScanListener;
 import org.eclipse.smarthome.core.thing.Bridge;
 import org.eclipse.smarthome.core.thing.ChannelUID;
 import org.eclipse.smarthome.core.thing.Thing;
@@ -70,6 +73,7 @@ public class IsyBridgeHandler extends BaseBridgeHandler implements InsteonClient
 
     private XStream xStream;
     private DeviceToSceneMapper sceneMapper;
+    private ScheduledFuture<?> discoverTask = null;
 
     public IsyBridgeHandler(Bridge bridge) {
         super(bridge);
@@ -96,6 +100,10 @@ public class IsyBridgeHandler extends BaseBridgeHandler implements InsteonClient
         if (this.eventSubscriber != null) {
             eventSubscriber.disconnect();
             eventSubscriber = null;
+        }
+        if (this.discoverTask != null && !this.discoverTask.isCancelled()) {
+            this.discoverTask.cancel(true);
+            this.discoverTask = null;
         }
     }
 
@@ -124,19 +132,60 @@ public class IsyBridgeHandler extends BaseBridgeHandler implements InsteonClient
         String authorizationHeaderValue = "Basic "
                 + java.util.Base64.getEncoder().encodeToString(usernameAndPassword.getBytes());
         this.isyClient = new IsyRestClient(config.getIpAddress(), authorizationHeaderValue, xStream);
-
-        // initialize mapping scene links to scene addresses. Do this before starting web service
-        // this way we get the initial set of updates for scenes too
-        List<Scene> scenes = this.isyClient.getScenes();
-        for (Scene scene : scenes) {
-            this.getSceneMapper().addSceneConfig(scene.address, scene.links);
-        }
-
         ISYModelChangeListener modelListener = new IsyListener();
         this.eventSubscriber = new IsyWebSocketSubscription(config.getIpAddress(), authorizationHeaderValue,
                 modelListener, xStream);
-        this.eventSubscriber.connect();
-        this.updateStatus(ThingStatus.ONLINE);
+
+        Runnable discover = new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    // initialize mapping scene links to scene addresses. Do this before starting web service
+                    // this way we get the initial set of updates for scenes too
+                    // this is also the first statement that can fail b/c of network or config (hostname/login) error
+                    List<Scene> scenes = IsyBridgeHandler.this.isyClient.getScenes();
+                    for (Scene scene : scenes) {
+                        IsyBridgeHandler.this.getSceneMapper().addSceneConfig(scene);
+                    }
+
+                    // start a scan of the REST interface on the ISY to get the device structure
+                    // and a initial value update. Register a listener to figure when that scna is done
+                    IsyBridgeHandler.this.bridgeDiscoveryService.startScan(new ScanListener() {
+
+                        // the REST scan is finished, time to connect the WS for live updates.
+                        // If that goes ok, time to go ONLINE
+                        @Override
+                        public void onFinished() {
+                            try {
+                                eventSubscriber.connect();
+                                updateStatus(ThingStatus.ONLINE);
+                                discoverTask.cancel(true);
+                            } catch (Exception e) {
+                                logger.debug("ISY bridge initialize: web socket connect failed: {}", e.getMessage());
+                                updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.COMMUNICATION_ERROR);
+                            }
+                        }
+
+                        // the REST scan failed. Keep the discovery task going
+                        @Override
+                        public void onErrorOccurred(@Nullable Exception e) {
+                            logger.debug("ISY bridge initialize: discovery scan failed: {}",
+                                    e != null ? e.getMessage() : "(no exception)");
+                            updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.COMMUNICATION_ERROR);
+                        }
+                    });
+
+                    // most likely caused by network problem or config error attempting to get scenes
+                    // possible that the REST scan parsing failed too
+                } catch (Exception e) {
+                    logger.debug("ISY bridge init failed: {}", e.getMessage());
+                    IsyBridgeHandler.this.updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.CONFIGURATION_ERROR);
+                }
+            }
+        };
+
+        // this task is cancelled once the bridge goes ONLINE (REST scan + WS connect success), otherwise keep trying...
+        this.discoverTask = this.scheduler.scheduleWithFixedDelay(discover, 0, 60, TimeUnit.SECONDS);
     }
 
     public void registerDiscoveryService(DiscoveryService isyBridgeDiscoveryService) {
@@ -272,6 +321,10 @@ public class IsyBridgeHandler extends BaseBridgeHandler implements InsteonClient
             NodeAddress nodeAddress = NodeAddress.parseAddressString(event.getNode());
             String id = IsyRestDiscoveryService.removeInvalidUidChars(nodeAddress.toStringNoDeviceId());
             logger.debug("ISY removed node {}", id);
+
+            // remove from inbox
+            bridgeDiscoveryService.removedDiscoveredNode(event.getNode());
+
             // cannot call rest interface at this point, the node is already gone
             for (Thing thing : getThing().getThings()) {
                 String current = thing.getUID().getAsString();
@@ -295,26 +348,17 @@ public class IsyBridgeHandler extends BaseBridgeHandler implements InsteonClient
 
         @Override
         public void onSceneLinkAdded(Event event) {
-            String id = event.getNode();
-            NodeAddress nodeAddress = NodeAddress.parseAddressString(event.getEventInfo().getMovedNode());
-            String link = IsyRestDiscoveryService.removeInvalidUidChars(nodeAddress.toStringNoDeviceId());
+            String sceneID = event.getNode();
+            String newLink = event.getEventInfo().getMovedNode();
 
-            logger.debug("ISY added link {} to scene {}", link, id);
-
-            List<String> old = sceneMapper.getSceneConfig(id);
-            List<String> links = new ArrayList<String>();
-
-            if (links != null) {
-                links.addAll(old);
-            }
-            links.add(link);
-            sceneMapper.addSceneConfig(id, links);
+            logger.debug("ISY added link {} to scene {}", newLink, sceneID);
+            sceneMapper.addSceneLink(sceneID, newLink);
 
             // if the thing already exists (not just in inbox), then update the links
             Thing t = null;
             for (Thing thing : getThing().getThings()) {
                 String current = thing.getUID().getAsString();
-                if (current.contains(id)) {
+                if (current.contains(sceneID)) {
                     t = thing;
                     break;
                 }
@@ -328,29 +372,22 @@ public class IsyBridgeHandler extends BaseBridgeHandler implements InsteonClient
             }
 
             // reset/init the thing, which re-maps the links in the scene
-            logger.debug("ISY added link {} to scene {}, resetting thing {}", link, id, t.getUID().getAsString());
+            logger.debug("ISY added link {} to scene {}, resetting thing {}", newLink, sceneID,
+                    t.getUID().getAsString());
             handler.thingUpdated(t);
         }
 
         @Override
         public void onSceneLinkRemoved(Event event) {
-            String id = event.getNode();
-            NodeAddress nodeAddress = NodeAddress.parseAddressString(event.getEventInfo().getRemovedNode());
-            String link = IsyRestDiscoveryService.removeInvalidUidChars(nodeAddress.toStringNoDeviceId());
-            logger.debug("ISY removed link {} from scene {}", link, id);
-
-            List<String> old = sceneMapper.getSceneConfig(id);
-            if (old != null) {
-                List<String> links = new ArrayList<String>();
-                links.addAll(old);
-                links.remove(link);
-                sceneMapper.addSceneConfig(id, links);
-            }
+            String sceneID = event.getNode();
+            String removedLink = event.getEventInfo().getRemovedNode();
+            logger.debug("ISY removed link {} from scene {}", removedLink, sceneID);
+            sceneMapper.removeLinkFromScene(sceneID, removedLink);
 
             Thing t = null;
             for (Thing thing : getThing().getThings()) {
                 String current = thing.getUID().getAsString();
-                if (current.contains(id)) {
+                if (current.contains(sceneID)) {
                     t = thing;
                     break;
                 }
@@ -363,8 +400,9 @@ public class IsyBridgeHandler extends BaseBridgeHandler implements InsteonClient
                 return;
             }
 
-            // rest/init the thing, which re-maps the updated links in the scene
-            logger.debug("ISY removed link {} from scene {}, resetting thing {}", link, id, t.getUID().getAsString());
+            // rest/init the scene (need to do this for actual device, since this doesn't do very much?)
+            logger.debug("ISY removed link {} from scene {}, resetting thing {}", removedLink, sceneID,
+                    t.getUID().getAsString());
             handler.thingUpdated(t);
         }
 
@@ -372,6 +410,10 @@ public class IsyBridgeHandler extends BaseBridgeHandler implements InsteonClient
         public void onSceneRemoved(Event event) {
             String id = event.getNode();
             logger.debug("ISY removed scene {}", id);
+
+            // remove from inbox
+            bridgeDiscoveryService.removeDiscoveredScene(id);
+
             // cannot call rest interface at this point, the node is already gone
             for (Thing thing : getThing().getThings()) {
                 String current = thing.getUID().getAsString();

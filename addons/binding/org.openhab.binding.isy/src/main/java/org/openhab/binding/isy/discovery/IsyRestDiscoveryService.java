@@ -3,6 +3,7 @@ package org.openhab.binding.isy.discovery;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ScheduledFuture;
 
 import org.eclipse.smarthome.config.discovery.AbstractDiscoveryService;
 import org.eclipse.smarthome.config.discovery.DiscoveryResult;
@@ -32,6 +33,8 @@ public class IsyRestDiscoveryService extends AbstractDiscoveryService {
     private static final int DISCOVER_TIMEOUT_SECONDS = 30;
     private IsyBridgeHandler bridgeHandler;
     private Map<String, ThingTypeUID> mMapDeviceTypeThingType;
+    private Map<String, ThingTypeUID> discoveredNodeTypeCache;
+    private ScheduledFuture<?> discoveryJob;
 
     /**
      * Creates a IsyDiscoveryService.
@@ -39,6 +42,7 @@ public class IsyRestDiscoveryService extends AbstractDiscoveryService {
     public IsyRestDiscoveryService(IsyBridgeHandler bridgeHandler) {
         super(ImmutableSet.of(new ThingTypeUID(IsyBindingConstants.BINDING_ID, "-")), DISCOVER_TIMEOUT_SECONDS, false);
         this.bridgeHandler = bridgeHandler;
+        this.discoveredNodeTypeCache = new HashMap<String, ThingTypeUID>();
         mMapDeviceTypeThingType = new HashMap<String, ThingTypeUID>();
         mMapDeviceTypeThingType.put("10.01", IsyBindingConstants.MOTION_THING_TYPE);
         mMapDeviceTypeThingType.put("01.20", IsyBindingConstants.DIMMER_THING_TYPE);
@@ -101,6 +105,7 @@ public class IsyRestDiscoveryService extends AbstractDiscoveryService {
 
     public void activate() {
         bridgeHandler.registerDiscoveryService(this);
+        super.activate(null);
     }
 
     /**
@@ -137,11 +142,28 @@ public class IsyRestDiscoveryService extends AbstractDiscoveryService {
         } catch (Exception e) {
             logger.error("error in discover programs", e);
         }
+    }
 
-        // (TH) POTENTIAL HACK
-        // it would be nice to restart the web socket to the ISY after discovery is done
-        // the web socket is started to early, before any isy "things" are created, thus the initial ws update from the
-        // isy is missed
+    @Override
+    protected void startBackgroundDiscovery() {
+        // if (this.discoveryJob == null || this.discoveryJob.isCancelled()) {
+        // this.discoveryJob = scheduler.scheduleWithFixedDelay(new Runnable() {
+        // @Override
+        // public void run() {
+        // if (bridgeHandler.getInsteonClient() != null) {
+        // startScan();
+        // }
+        // }
+        // }, 1, 15, TimeUnit.SECONDS);
+        // }
+    }
+
+    @Override
+    protected void stopBackgroundDiscovery() {
+        if (this.discoveryJob != null && !this.discoveryJob.isCancelled()) {
+            this.discoveryJob.cancel(true);
+            this.discoveryJob = null;
+        }
     }
 
     private void discoverPrograms() {
@@ -184,24 +206,29 @@ public class IsyRestDiscoveryService extends AbstractDiscoveryService {
      * @param scene
      */
     public void discoverScene(Scene scene) {
-        logger.debug("discovered scene: " + scene);
+        logger.debug("discovered scene, address: {}, name: {}, {} links", scene.address, scene.name,
+                scene.links.size());
+
         Map<String, Object> properties = new HashMap<>(0);
         properties.put(IsyInsteonDeviceConfiguration.ADDRESS, scene.address);
-        logger.debug("scene address: {}", scene.address);
         properties.put(IsyInsteonDeviceConfiguration.NAME, scene.name);
-        logger.debug("scene name: {}", scene.name);
-
-        this.bridgeHandler.getSceneMapper().addSceneConfig(scene.address, scene.links);
-        logger.debug("scene {} added {} links", scene.name, scene.links.size());
+        this.bridgeHandler.getSceneMapper().addSceneConfig(scene);
 
         ThingUID bridgeUID = this.bridgeHandler.getThing().getUID();
         ThingTypeUID theThingTypeUid = IsyBindingConstants.SCENE_THING_TYPE;
         String thingID = removeInvalidUidChars(scene.address);
-        logger.debug("scene address: {}", thingID);
         ThingUID thingUID = new ThingUID(theThingTypeUid, bridgeUID, thingID);
         DiscoveryResult discoveryResult = DiscoveryResultBuilder.create(thingUID).withBridge(bridgeUID)
                 .withProperties(properties).withBridge(bridgeUID).withLabel(scene.name).build();
         thingDiscovered(discoveryResult);
+    }
+
+    public void removeDiscoveredScene(String address) {
+        ThingUID bridge = this.bridgeHandler.getThing().getUID();
+        ThingTypeUID type = IsyBindingConstants.SCENE_THING_TYPE;
+        String id = removeInvalidUidChars(address);
+        ThingUID uid = new ThingUID(type, bridge, id);
+        thingRemoved(uid);
     }
 
     private void discoverVariables() {
@@ -273,10 +300,22 @@ public class IsyRestDiscoveryService extends AbstractDiscoveryService {
             }
 
             String thingID = removeInvalidUidChars(nodeAddress.toStringNoDeviceId());
+            this.discoveredNodeTypeCache.put(thingID, theThingTypeUid);
             ThingUID thingUID = new ThingUID(theThingTypeUid, bridgeUID, thingID);
             DiscoveryResult discoveryResult = DiscoveryResultBuilder.create(thingUID).withBridge(bridgeUID)
                     .withProperties(properties).withBridge(bridgeUID).withLabel(node.getName()).build();
             thingDiscovered(discoveryResult);
         }
+    }
+
+    public void removedDiscoveredNode(String address) {
+        NodeAddress nodeAddress = NodeAddress.parseAddressString(address);
+        String id = removeInvalidUidChars(nodeAddress.toStringNoDeviceId());
+        ThingTypeUID type = this.discoveredNodeTypeCache.get(id);
+        if (type == null) {
+            return;
+        }
+        ThingUID uid = new ThingUID(type, bridgeHandler.getThing().getUID(), id);
+        thingRemoved(uid);
     }
 }

@@ -33,17 +33,27 @@ public class SceneHandler extends AbtractIsyThingHandler {
 
         IsyBridgeHandler bridgeHandler = getBridgeHandler();
         IsySceneConfiguration scene = getThing().getConfiguration().as(IsySceneConfiguration.class);
-        if (command.equals(RefreshType.REFRESH)) {
-            logger.debug("SceneHandler handleCommand: REFRESH for chan: {}", channelUID);
-            this.updateState(channelUID, this.getSceneState(true));
-        } else if (OnOffType.ON.equals(command)) {
-            logger.debug("SceneHandler handleCommand: ON for chan: {}", channelUID);
-            bridgeHandler.getInsteonClient().changeSceneState(scene.address, 255);
-        } else if (OnOffType.OFF.equals(command)) {
-            logger.debug("SceneHandler handleCommand: OFF for chan: {}", channelUID);
-            bridgeHandler.getInsteonClient().changeSceneState(scene.address, 0);
-        } else {
-            logger.warn("Unexpected command: " + command.toFullString());
+        try {
+            if (command.equals(RefreshType.REFRESH)) {
+                logger.debug("SceneHandler handleCommand: REFRESH for chan: {}", channelUID);
+                this.updateState(channelUID, this.getSceneState(true));
+            } else if (OnOffType.ON.equals(command)) {
+                logger.debug("SceneHandler handleCommand: ON for chan: {}", channelUID);
+                bridgeHandler.getInsteonClient().changeSceneState(scene.address, 255);
+            } else if (OnOffType.OFF.equals(command)) {
+                logger.debug("SceneHandler handleCommand: OFF for chan: {}", channelUID);
+                bridgeHandler.getInsteonClient().changeSceneState(scene.address, 0);
+            } else {
+                logger.warn("Unexpected command: " + command.toFullString());
+            }
+            if (!this.getThing().getStatus().equals(ThingStatus.ONLINE)) {
+                this.updateStatus(ThingStatus.ONLINE);
+            }
+        } catch (Exception e) {
+            logger.debug("SceneHandler handleCommand caught exception: {}", e.getMessage());
+            if (!this.getThing().getStatus().equals(ThingStatus.OFFLINE)) {
+                this.updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.COMMUNICATION_ERROR);
+            }
         }
     }
 
@@ -163,12 +173,13 @@ public class SceneHandler extends AbtractIsyThingHandler {
 
         IsySceneConfiguration sceneConfig = this.getThing().getConfiguration().as(IsySceneConfiguration.class);
         IsyBridgeHandler bridge = this.getBridgeHandler();
-        ThingStatus status = bridge.getThing().getStatus();
-        logger.debug("SceneHandler initialize: Bridge status is {}", status);
-        if (ThingStatus.ONLINE.equals(status)) {
+        ThingStatus bridgeStatus = bridge.getThing().getStatus();
+
+        // need bridge online to get scene->links mapping
+        if (ThingStatus.ONLINE.equals(bridgeStatus)) {
             // if bridge already online, then should have the required info
             List<String> links = bridge.getSceneMapper().getSceneConfig(sceneConfig.address);
-            if (links != null && !links.isEmpty()) {
+            if (links != null) {
                 // create initial link states as null, this way we can figure if it needs a initial request later
                 for (String link : links) {
                     logger.debug("SceneHandler initialize: initializing link status for {}", link);
@@ -179,7 +190,7 @@ public class SceneHandler extends AbtractIsyThingHandler {
             }
             this.updateStatus(ThingStatus.ONLINE);
         } else {
-            updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.BRIDGE_OFFLINE);
+            this.updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.BRIDGE_OFFLINE);
         }
     }
 
@@ -190,7 +201,7 @@ public class SceneHandler extends AbtractIsyThingHandler {
             IsySceneConfiguration sceneConfig = this.getThing().getConfiguration().as(IsySceneConfiguration.class);
             IsyBridgeHandler bridge = this.getBridgeHandler();
             List<String> links = bridge.getSceneMapper().getSceneConfig(sceneConfig.address);
-            if (links != null && !links.isEmpty()) {
+            if (links != null) {
                 // create initial link states as null, this way we can figure if it needs a initial request later
                 for (String link : links) {
                     logger.debug("SceneHandler bridgeStatusChanged: initializing link status for {}", link);
@@ -201,11 +212,8 @@ public class SceneHandler extends AbtractIsyThingHandler {
             }
             this.updateStatus(ThingStatus.ONLINE);
         } else if (ThingStatus.OFFLINE.equals(bridgeStatusInfo.getStatus())) {
-            this.linkStates.clear();
-            this.getBridgeHandler().getSceneMapper().removeScene(this);
             this.updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.BRIDGE_OFFLINE);
         }
-        super.bridgeStatusChanged(bridgeStatusInfo);
     }
 
     @Override
@@ -213,12 +221,6 @@ public class SceneHandler extends AbtractIsyThingHandler {
         this.linkStates.clear();
         this.getBridgeHandler().getSceneMapper().removeScene(this);
         super.handleRemoval();
-    }
-
-    @Override
-    public void handleConfigurationUpdate(@NonNull Map<@NonNull String, @NonNull Object> configurationParameters) {
-        // TODO Auto-generated method stub
-        super.handleConfigurationUpdate(configurationParameters);
     }
 
     @Override
