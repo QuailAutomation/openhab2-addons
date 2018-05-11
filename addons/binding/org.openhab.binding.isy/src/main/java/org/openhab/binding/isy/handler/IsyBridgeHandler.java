@@ -318,20 +318,25 @@ public class IsyBridgeHandler extends BaseBridgeHandler implements InsteonClient
 
         @Override
         public void onNodeRemoved(Event event) {
+            String rawAddr = event.getNode();
             NodeAddress nodeAddress = NodeAddress.parseAddressString(event.getNode());
-            String id = IsyRestDiscoveryService.removeInvalidUidChars(nodeAddress.toStringNoDeviceId());
-            logger.debug("ISY removed node {}", id);
+            String addr = IsyRestDiscoveryService.removeInvalidUidChars(nodeAddress.toStringNoDeviceId());
+            logger.debug("ISY removed node {}", rawAddr);
 
             // remove from inbox
-            bridgeDiscoveryService.removedDiscoveredNode(event.getNode());
+            bridgeDiscoveryService.removedDiscoveredNode(rawAddr);
+
+            // remove device ids from scene mapper linkage
+            sceneMapper.removeDeviceLinks(rawAddr);
 
             // cannot call rest interface at this point, the node is already gone
+            // set device status to GONE
             for (Thing thing : getThing().getThings()) {
                 String current = thing.getUID().getAsString();
-                if (current.contains(id)) {
+                if (current.contains(addr)) {
                     thing.setStatusInfo(new ThingStatusInfo(ThingStatus.OFFLINE, ThingStatusDetail.GONE,
                             "Device was removed from ISY"));
-                    logger.debug("ISY remove for node {} found thing {}", id, current);
+                    logger.debug("ISY remove for node {} found thing {}", addr, current);
                     return;
                 }
             }
@@ -414,11 +419,19 @@ public class IsyBridgeHandler extends BaseBridgeHandler implements InsteonClient
             // remove from inbox
             bridgeDiscoveryService.removeDiscoveredScene(id);
 
+            // remove from scene mapper
+            sceneMapper.removeSceneConfig(id);
+
             // cannot call rest interface at this point, the node is already gone
+            // set status, and remove from scene handler map
             for (Thing thing : getThing().getThings()) {
                 String current = thing.getUID().getAsString();
                 if (current.contains(id)) {
                     logger.debug("ISY removed scene {} found thing {}", id, current);
+                    ThingHandler handler = thing.getHandler();
+                    if (handler != null) {
+                        sceneMapper.removeScene((SceneHandler) handler);
+                    }
                     thing.setStatusInfo(new ThingStatusInfo(ThingStatus.OFFLINE, ThingStatusDetail.GONE,
                             "Scene was removed from ISY"));
                     return;

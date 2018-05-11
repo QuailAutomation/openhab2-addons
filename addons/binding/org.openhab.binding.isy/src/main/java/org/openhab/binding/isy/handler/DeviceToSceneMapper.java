@@ -18,8 +18,20 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * @author thomashentschel
+ * Stores the linkage between scenes and its associates devices<br>
+ * <br>
+ * There are two linkages:<br>
+ * <ul>
+ * <li>scene config: the links to devices a scene contains. Stored as relationship of a scene id to a list of
+ * device ids</li>
+ * <li>device to scene handler: this maps a device id to a set of OHAB scene ThingHandlers. The handler may
+ * effect scene state change when the device changes state</li>
+ * </ul>
  *
+ * The scene ThingHandler is the actual handler associated with the scene Thing. This class cannot hold on to the
+ * handlers longer than the thing/handler lives.<br>
+ *
+ * @author thomashentschel
  */
 public class DeviceToSceneMapper {
 
@@ -30,8 +42,9 @@ public class DeviceToSceneMapper {
     private IsyBridgeHandler bridgeHandler;
 
     /**
-     * @param bridgeHandler
+     * Instantiate
      *
+     * @param bridgeHandler
      */
     public DeviceToSceneMapper(IsyBridgeHandler bridgeHandler) {
         this.bridgeHandler = bridgeHandler;
@@ -39,6 +52,15 @@ public class DeviceToSceneMapper {
         this.device2SceneHandlerMap = new HashMap<String, Set<SceneHandler>>();
     }
 
+    /**
+     * Maps a Scene Thinghandler to a list of devices (device id's) <br>
+     * <br>
+     * This is called by the initialization routine of each Scene Thinghandler with
+     * the scene's links as second argument<br>
+     *
+     * @param sceneHandler the scene TingHandler instance to link
+     * @param deviceIDs the device links as device ID's
+     */
     public synchronized void mapScene2Devices(SceneHandler sceneHandler, List<String> deviceIDs) {
         for (String deviceID : deviceIDs) {
             if (!this.device2SceneHandlerMap.containsKey(deviceID)) {
@@ -49,6 +71,11 @@ public class DeviceToSceneMapper {
         }
     }
 
+    /**
+     * remove the scene handler from any device id -> list[scene handler] mappings
+     *
+     * @param sceneHandler the scene handler to remove
+     */
     public synchronized void removeScene(SceneHandler sceneHandler) {
 
         ThingUID sceneUID = sceneHandler.getThing().getUID();
@@ -64,6 +91,15 @@ public class DeviceToSceneMapper {
         }
     }
 
+    /**
+     * Return the set of scene ThingHandlers that respond to a device ID.<br>
+     * <br>
+     * If the current device to scene handler mapping doesn't have a result,
+     * this will attempt to look up the scene ThingHandler(s) from the bridge
+     *
+     * @param deviceID the device to get the scene ThingHandler for
+     * @return a set of scene handlers associated with the given device
+     */
     public synchronized Set<SceneHandler> getSceneHandlerFor(String deviceID) {
 
         Set<SceneHandler> result = this.device2SceneHandlerMap.get(deviceID);
@@ -128,6 +164,15 @@ public class DeviceToSceneMapper {
     }
 
     /**
+     * remove scene config (mapping scene ID -> list[ device ID])
+     *
+     * @param sceneID
+     */
+    public synchronized void removeSceneConfig(String sceneID) {
+        this.sceneConfigMap.remove(sceneID);
+    }
+
+    /**
      * remove link from scene (including scene handler mapped to the device id)
      *
      * @param sceneID the scene id to remove the link from
@@ -149,5 +194,30 @@ public class DeviceToSceneMapper {
                 }
             }
         }
+    }
+
+    /**
+     * remove all traces of scene linkage to this device address<br>
+     * <ul>
+     * <li>from scene config ( scene id -> list[device addresses] )</li>
+     * <li>from scene handler mapping ( device id -> list[isy scene handler] )</li>
+     * </ul>
+     *
+     * @param rawAddr the raw insteon address to the address + device id
+     */
+    public synchronized void removeDeviceLinks(String rawAddr) {
+        // go thru all deviceIDs in scene config
+        // find rawAddr in device IDs and remove
+        for (List<String> deviceIDs : sceneConfigMap.values()) {
+            Iterator<String> deviceID = deviceIDs.iterator();
+            while (deviceID.hasNext()) {
+                String id = deviceID.next();
+                if (id.equals(rawAddr)) {
+                    deviceID.remove();
+                }
+            }
+        }
+        // .. and remove all handlers for that device
+        this.device2SceneHandlerMap.remove(rawAddr);
     }
 }
