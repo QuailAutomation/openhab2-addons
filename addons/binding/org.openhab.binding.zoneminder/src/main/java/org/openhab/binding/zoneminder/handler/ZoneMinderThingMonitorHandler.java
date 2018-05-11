@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2010-2017 by the respective copyright holders.
+ * Copyright (c) 2010-2018 by the respective copyright holders.
  *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
@@ -18,6 +18,9 @@ import java.util.regex.Pattern;
 
 import javax.security.auth.login.FailedLoginException;
 
+import org.eclipse.jdt.annotation.NonNull;
+import org.eclipse.jdt.annotation.Nullable;
+import org.eclipse.smarthome.config.core.Configuration;
 import org.eclipse.smarthome.core.library.types.OnOffType;
 import org.eclipse.smarthome.core.thing.Bridge;
 import org.eclipse.smarthome.core.thing.Channel;
@@ -95,9 +98,10 @@ public class ZoneMinderThingMonitorHandler extends ZoneMinderBaseThingHandler im
 
     private int forceAlarmManualState = -1;
 
+    private ImageUpdateHandler imageUpdateHandler = null;
+
     public ZoneMinderThingMonitorHandler(Thing thing) {
         super(thing);
-
         logger.info("{}: Starting ZoneMinder Server Thing Handler (Thing='{}')", getLogIdentifier(), thing.getUID());
     }
 
@@ -126,6 +130,7 @@ public class ZoneMinderThingMonitorHandler extends ZoneMinderBaseThingHandler im
 
             ZoneMinderFactory.SubscribeMonitorEvents(connection, config.getZoneMinderId(), this);
             IZoneMinderSession session = aquireSession();
+            this.imageUpdateHandler.start();
             IZoneMinderMonitor monitor = ZoneMinderFactory.getMonitorProxy(session, config.getZoneMinderId());
             IZoneMinderMonitorData monitorData = monitor.getMonitorData();
 
@@ -154,7 +159,7 @@ public class ZoneMinderThingMonitorHandler extends ZoneMinderBaseThingHandler im
         try {
             logger.info("{}: Bridge '{}' disconnected", getLogIdentifier(), bridge.getThing().getUID().getAsString());
 
-            logger.info("{}: Unsubscribing from Monitor Events", getLogIdentifier(),
+            logger.info("{}: Unsubscribing from Monitor Events: {}", getLogIdentifier(),
                     bridge.getThing().getUID().getAsString());
             ZoneMinderFactory.UnsubscribeMonitorEvents(config.getZoneMinderId(), this);
 
@@ -321,12 +326,36 @@ public class ZoneMinderThingMonitorHandler extends ZoneMinderBaseThingHandler im
         try {
             super.initialize();
             this.config = getMonitorConfig();
+
+            ZoneMinderServerBridgeHandler bridge = (ZoneMinderServerBridgeHandler) this.getBridge().getHandler();
+            this.imageUpdateHandler = new ImageUpdateHandler(bridge, this);
+
             logger.info("{}: ZoneMinder Monitor Handler Initialized", getLogIdentifier());
             logger.debug("{}:    Monitor Id:         {}", getLogIdentifier(), config.getZoneMinderId());
         } catch (Exception ex) {
             logger.error("{}: Exception occurred when calling 'initialize()'. Exception='{}'", getLogIdentifier(),
                     ex.getMessage());
         }
+    }
+
+    /**
+     * make visible in the package
+     */
+    @Override
+    protected @Nullable Bridge getBridge() {
+        return super.getBridge();
+    }
+
+    @Override
+    public void handleConfigurationUpdate(@NonNull Map<@NonNull String, @NonNull Object> configurationParameters) {
+        // TODO Auto-generated method stub
+        super.handleConfigurationUpdate(configurationParameters);
+    }
+
+    @Override
+    protected void updateConfiguration(@NonNull Configuration configuration) {
+        // TODO Auto-generated method stub
+        super.updateConfiguration(configuration);
     }
 
     @Override
@@ -540,6 +569,11 @@ public class ZoneMinderThingMonitorHandler extends ZoneMinderBaseThingHandler im
         updateThingStatus(newThingStatus, thingStatusDetailed, thingStatusDescription);
     }
 
+    @Override
+    protected void updateState(@NonNull ChannelUID channelUID, @NonNull State state) {
+        super.updateState(channelUID, state);
+    }
+
     /*
      * From here we update states in openHAB
      *
@@ -596,6 +630,28 @@ public class ZoneMinderThingMonitorHandler extends ZoneMinderBaseThingHandler im
                     state = getChannelBoolAsOnOffState(channelDaemonFrame);
                     break;
 
+                case ZoneMinderConstants.CHANNEL_MONITOR_IMAGE:
+                    if (this.imageUpdateHandler != null) {
+                        if (this.getConfigValueAsBooelan(ZoneMinderConstants.PARAM_ENABLE_IMAGE_UPDATES)) {
+                            state = this.imageUpdateHandler.getImage();
+                        }
+                    } else {
+                        logger.warn("{}: updateChannel(): Monitor '{}': Image handler not present (null) '{}'",
+                                getLogIdentifier(), thing.getLabel(), channel.getAsString());
+                    }
+                    break;
+
+                case ZoneMinderConstants.CHANNEL_MONITOR_VIDEOURL:
+                    if (this.imageUpdateHandler != null) {
+
+                        // this will return null if the URL hasn't changed since last time, thus bypassing the update
+                        state = this.imageUpdateHandler.getVideoURL();
+                    } else {
+                        logger.warn("{}: updateChannel(): Monitor '{}': Video handler not present (null) '{}'",
+                                getLogIdentifier(), thing.getLabel(), channel.getAsString());
+                    }
+                    break;
+
                 default:
                     logger.warn("{}: updateChannel(): Monitor '{}': No handler defined for channel='{}'",
                             getLogIdentifier(), thing.getLabel(), channel.getAsString());
@@ -605,7 +661,6 @@ public class ZoneMinderThingMonitorHandler extends ZoneMinderBaseThingHandler im
             }
 
             if (state != null) {
-
                 logger.debug("{}: Setting channel '{}' to '{}'", getLogIdentifier(), channel.toString(),
                         state.toString());
                 updateState(channel.getId(), state);
@@ -794,11 +849,15 @@ public class ZoneMinderThingMonitorHandler extends ZoneMinderBaseThingHandler im
 
                     channelFunction = data.getFunction();
                     channelEnabled = data.getEnabled();
-                    IZoneMinderEventData event = monitorProxy.getLastEvent();
-                    if (event != null) {
-                        channelEventCause = event.getCause();
-                    } else {
-                        channelEventCause = "";
+                    channelEventCause = "";
+                    try {
+                        IZoneMinderEventData event = monitorProxy.getLastEvent();
+                        if (event != null) {
+                            channelEventCause = event.getCause();
+                        }
+                    } catch (Exception e) {
+                        logger.debug("{}: Monitor Proxy reported exception {}, msg: {}", getLogIdentifier(),
+                                e.getClass(), e.getMessage());
                     }
 
                     channelDaemonCapture = captureDaemon.getStatus();

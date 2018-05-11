@@ -1,0 +1,31 @@
+Manifest-Version: 1.0
+Bundle-ActivationPolicy: lazy
+Bundle-ClassPath: .
+Bundle-ManifestVersion: 2
+Bundle-Name: MarlinFireplace Binding
+Bundle-RequiredExecutionEnvironment: JavaSE-1.8
+Bundle-SymbolicName: org.openhab.binding.marlinfireplace;singleton:=true
+Bundle-Vendor: openHAB
+Bundle-Version: 2.2.0.qualifier
+Export-Package: 
+ org.openhab.binding.marlinfireplace,
+ org.openhab.binding.marlinfireplace.handler
+Import-Package: 
+ org.eclipse.jdt.annotation;resolution:=optional,
+ org.eclipse.smarthome.config.core,
+ org.eclipse.smarthome.core.library.types,
+ org.eclipse.smarthome.core.thing,
+ org.eclipse.smarthome.core.thing.binding,
+ org.eclipse.smarthome.core.thing.binding.builder,
+ org.eclipse.smarthome.core.thing.type,
+ org.eclipse.smarthome.core.types,
+ org.openhab.binding.marlinfireplace,
+ org.openhab.binding.marlinfireplace.handler,
+ org.openhab.core.events,
+ org.openhab.core.items,
+ org.openhab.core.types,
+ org.openhab.io.transport.mqtt,
+ org.osgi.framework,
+ org.osgi.service.cm,
+ org.slf4j
+Service-Component: OSGI-INF/*.xml

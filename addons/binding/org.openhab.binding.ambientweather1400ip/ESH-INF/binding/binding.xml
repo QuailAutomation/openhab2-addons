@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<binding:binding id="ambientweather1400ip"
+				 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+				 xmlns:binding="http://eclipse.org/smarthome/schemas/binding/v1.0.0"
+				 xsi:schemaLocation="http://eclipse.org/smarthome/schemas/binding/v1.0.0 http://eclipse.org/smarthome/schemas/binding-1.0.0.xsd">
+
+	<name>AmbientWeather 1400 IP Binding</name>
+	<description>This is the binding for the Ambient Weather 1400 IP weather station.</description>
+	<author>Thomas Hentschel</author>
+
+</binding:binding>
