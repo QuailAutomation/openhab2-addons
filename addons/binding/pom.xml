@@ -38,6 +38,7 @@
     <module>org.openhab.binding.folding</module>
     <module>org.openhab.binding.freebox</module>
     <module>org.openhab.binding.fronius</module>
+    <module>org.openhab.binding.ftpupload</module>
     <module>org.openhab.binding.gardena</module>
     <module>org.openhab.binding.harmonyhub</module>
     <module>org.openhab.binding.hdanywhere</module>
@@ -58,6 +59,7 @@
     <module>org.openhab.binding.lametrictime</module>
     <module>org.openhab.binding.lgtvserial</module>
     <module>org.openhab.binding.lgwebos</module>
+    <module>org.openhab.binding.logreader</module>
     <module>org.openhab.binding.loxone</module>
     <module>org.openhab.binding.lutron</module>
     <module>org.openhab.binding.max</module>
@@ -100,6 +102,7 @@
     <module>org.openhab.binding.silvercrestwifisocket</module>
     <module>org.openhab.binding.sleepiq</module>
     <module>org.openhab.binding.smaenergymeter</module>
+    <module>org.openhab.binding.solarlog</module>
     <module>org.openhab.binding.squeezebox</module>
     <module>org.openhab.binding.synopanalyzer</module>
     <module>org.openhab.binding.systeminfo</module>

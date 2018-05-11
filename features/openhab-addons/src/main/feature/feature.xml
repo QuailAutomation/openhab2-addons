@@ -112,10 +112,17 @@
         <feature>openhab-transport-mdns</feature>
         <bundle start-level="80">mvn:org.openhab.binding/org.openhab.binding.freebox/${project.version}</bundle>
     </feature>
+
     <feature name="openhab-binding-fronius" description="Fronius Binding" version="${project.version}">
         <feature>openhab-runtime-base</feature>
         <bundle start-level="80">mvn:org.openhab.binding/org.openhab.binding.fronius/${project.version}</bundle>
     </feature>
+
+    <feature name="openhab-binding-ftpupload" description="FTP Upload Binding" version="${project.version}">
+        <feature>openhab-runtime-base</feature>
+        <bundle start-level="80">mvn:org.openhab.binding/org.openhab.binding.ftpupload/${project.version}</bundle>
+    </feature>
+
     <feature name="openhab-binding-gardena" description="Gardena Binding" version="${project.version}">
         <feature>openhab-runtime-base</feature>
         <bundle start-level="80">mvn:org.openhab.binding/org.openhab.binding.gardena/${project.version}</bundle>
@@ -230,6 +237,11 @@
         <bundle>mvn:org.apache.httpcomponents/httpcore-osgi/4.2.3</bundle>
         <bundle>mvn:org.apache.httpcomponents/httpclient-osgi/4.2.3</bundle>
         <bundle start-level="80">mvn:org.openhab.binding/org.openhab.binding.lgwebos/${project.version}</bundle>
+    </feature>
+
+    <feature name="openhab-binding-logreader" description="Log Reader Binding" version="${project.version}">
+        <feature>openhab-runtime-base</feature>
+        <bundle start-level="80">mvn:org.openhab.binding/org.openhab.binding.logreader/${project.version}</bundle>
     </feature>
 
     <feature name="openhab-binding-loxone" description="Loxone Binding" version="${project.version}">
@@ -424,6 +436,11 @@
     <feature name="openhab-binding-smaenergymeter" description="SMA Energy Monitor Binding" version="${project.version}">
         <feature>openhab-runtime-base</feature>
         <bundle start-level="80">mvn:org.openhab.binding/org.openhab.binding.smaenergymeter/${project.version}</bundle>
+    </feature>
+
+    <feature name="openhab-binding-solarlog" description="SolarLog Binding" version="${project.version}">
+        <feature>openhab-runtime-base</feature>
+        <bundle start-level="80">mvn:org.openhab.binding/org.openhab.binding.solarlog/${project.version}</bundle>
     </feature>
 
     <feature name="openhab-binding-squeezebox" description="Squeezebox Binding" version="${project.version}">
