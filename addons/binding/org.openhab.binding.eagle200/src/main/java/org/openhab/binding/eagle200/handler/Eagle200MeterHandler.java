@@ -35,6 +35,8 @@ import org.eclipse.smarthome.core.thing.ThingStatusInfo;
 import org.eclipse.smarthome.core.thing.binding.BaseThingHandler;
 import org.eclipse.smarthome.core.thing.binding.builder.ChannelBuilder;
 import org.eclipse.smarthome.core.thing.binding.builder.ThingBuilder;
+import org.eclipse.smarthome.core.thing.type.ChannelKind;
+import org.eclipse.smarthome.core.thing.type.ChannelTypeUID;
 import org.eclipse.smarthome.core.types.Command;
 import org.openhab.binding.eagle200.Eagle200BindingConstants;
 import org.slf4j.Logger;
@@ -158,9 +160,11 @@ public class Eagle200MeterHandler extends BaseThingHandler {
         SortedMap<String, String> sorted = new TreeMap<String, String>(update);
         for (Map.Entry<String, String> entry : sorted.entrySet()) {
             if (this.getThing().getChannel(this.getChannelName(entry.getKey())) == null) {
+                String tag = entry.getKey().replace("zigbee:", "");
+                ChannelTypeUID typeUID = new ChannelTypeUID(Eagle200BindingConstants.BINDING_ID, tag);
                 ChannelUID uid = this.getChannelUID(entry.getKey());
-                Channel channel = ChannelBuilder.create(uid, "String").withLabel(entry.getKey().replace("zigbee:", ""))
-                        .build();
+                Channel channel = ChannelBuilder.create(uid, "String").withLabel(tag).withType(typeUID)
+                        .withKind(ChannelKind.STATE).build();
                 builder.withChannel(channel);
             }
         }
