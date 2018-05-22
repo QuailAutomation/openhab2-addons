@@ -50,7 +50,7 @@ public class IsyRestClient implements OHIsyClient {
     public static final String VAR_STATE_TYPE = "2";
 
     private static String AUTHORIZATIONHEADERNAME = "Authorization";
-    String authorizationHeaderValue;
+    private String authorizationHeaderValue;
 
     // REST Client API variables
     protected Client isyClient;
@@ -282,7 +282,7 @@ public class IsyRestClient implements OHIsyClient {
         return name;
     }
 
-    private static String removeBadChars(String text) {
+    public static String removeBadChars(String text) {
         return text.replace("(", "").replace(")", "").replace("-", "_");
     }
 
@@ -291,7 +291,7 @@ public class IsyRestClient implements OHIsyClient {
         List<Scene> returnValue = new ArrayList<Scene>();
         String scenesXml = scenesTarget.request().header(AUTHORIZATIONHEADERNAME, authorizationHeaderValue)
                 .accept(MediaType.TEXT_XML).get(String.class);
-        logger.debug("scenes xml: {}", scenesXml);
+        logger.trace("scenes xml: {}", scenesXml);
         DocumentBuilderFactory domFactory = DocumentBuilderFactory.newInstance();
         domFactory.setNamespaceAware(true);
         DocumentBuilder builder;
@@ -312,23 +312,44 @@ public class IsyRestClient implements OHIsyClient {
                     Element firstElement = (Element) node;
 
                     String name = getValue(firstElement, "name");
+                    if ("ISY".equalsIgnoreCase(name)) {
+                        continue;
+                    }
                     String address = getValue(firstElement, "address");
-                    logger.debug("read another scene from xml: " + name);
-                    returnValue.add(new Scene(removeBadChars(name), address));
+                    List<String> links = new ArrayList<String>();
+                    org.w3c.dom.NodeList linklist = firstElement.getElementsByTagName("link");
+
+                    for (int ii = 0; ii < linklist.getLength(); ii++) {
+                        org.w3c.dom.Node linknode = linklist.item(ii);
+                        if (linknode == null) {
+                            logger.debug("a link is null in scene '{}'", name);
+                            continue;
+                        }
+                        if (linknode.getNodeType() != org.w3c.dom.Node.ELEMENT_NODE) {
+                            logger.debug("a link is not a XML node in scene '{}'", name);
+                            continue;
+                        }
+                        Element firstLinkElement = (Element) linknode;
+                        String link = firstLinkElement.getTextContent();
+                        if (link != null) {
+                            links.add(link);
+                        }
+                    }
+                    logger.trace("read another scene from xml: " + name + " with address " + address + " and "
+                            + links.size() + " links");
+                    returnValue.add(new Scene(removeBadChars(name), address, links));
                 }
 
             }
+
+            // TODO need correct response instead of swallowing exceptions
         } catch (ParserConfigurationException e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
         } catch (SAXException e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
         } catch (IOException e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
         } catch (XPathExpressionException e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
         }
 
@@ -337,6 +358,7 @@ public class IsyRestClient implements OHIsyClient {
 
     private void dumpNodes() {
         String nodes = testGetString(nodesTarget);
+        System.out.println(nodes);
     }
 
     private void dumpStatus() {

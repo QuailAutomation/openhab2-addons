@@ -3,7 +3,7 @@ Bundle-ManifestVersion: 2
 Bundle-Name: Isy Binding
 Bundle-SymbolicName: org.openhab.binding.isy;singleton:=true
 Bundle-Vendor: openHAB
-Bundle-Version: 2.2.0.qualifier
+Bundle-Version: 2.3.0.qualifier
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Bundle-ClassPath: .,
  lib/guava-18.0.jar,
@@ -25,13 +25,17 @@ Import-Package:
  org.eclipse.jetty.websocket.client,
  org.eclipse.jetty.websocket.common,
  org.eclipse.smarthome.config.core,
- org.eclipse.smarthome.config.discovery,
  org.eclipse.smarthome.core.library.types,
  org.eclipse.smarthome.core.thing,
  org.eclipse.smarthome.core.thing.binding,
  org.eclipse.smarthome.core.thing.binding.builder,
  org.eclipse.smarthome.core.thing.type,
  org.eclipse.smarthome.core.types,
+ org.eclipse.smarthome.config.discovery,
+ org.eclipse.smarthome.config.discovery.upnp,
+ org.jupnp.model.meta,
+ org.jupnp.model.types,
+ org.eclipse.jdt.annotation;resolution:=optional,
  org.hamcrest.core;resolution:=optional,
  org.junit;resolution:=optional,
  org.osgi.framework,

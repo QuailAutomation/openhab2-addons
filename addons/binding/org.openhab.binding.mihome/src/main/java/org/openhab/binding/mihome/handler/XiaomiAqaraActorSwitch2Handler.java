@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2010-2017 by the respective copyright holders.
+ * Copyright (c) 2010-2018 by the respective copyright holders.
  *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
@@ -27,7 +27,10 @@ import com.google.gson.JsonObject;
 public class XiaomiAqaraActorSwitch2Handler extends XiaomiActorBaseHandler {
 
     private final Logger logger = LoggerFactory.getLogger(XiaomiAqaraActorSwitch2Handler.class);
-    private String itemId;
+
+    private static final String CHANNEL_0 = "channel_0";
+    private static final String CHANNEL_1 = "channel_1";
+    private static final String ON = "on";
 
     public XiaomiAqaraActorSwitch2Handler(Thing thing) {
         super(thing);
@@ -38,10 +41,12 @@ public class XiaomiAqaraActorSwitch2Handler extends XiaomiActorBaseHandler {
         String status = command.toString().toLowerCase();
         switch (channelUID.getId()) {
             case CHANNEL_SWITCH_CH0:
-                getXiaomiBridgeHandler().writeToDevice(itemId, new String[] { "channel_0" }, new Object[] { status });
+                getXiaomiBridgeHandler().writeToDevice(getItemId(), new String[] { CHANNEL_0 },
+                        new Object[] { status });
                 return;
             case CHANNEL_SWITCH_CH1:
-                getXiaomiBridgeHandler().writeToDevice(itemId, new String[] { "channel_1" }, new Object[] { status });
+                getXiaomiBridgeHandler().writeToDevice(getItemId(), new String[] { CHANNEL_1 },
+                        new Object[] { status });
                 return;
         }
         // Only gets here, if no condition was met
@@ -70,11 +75,11 @@ public class XiaomiAqaraActorSwitch2Handler extends XiaomiActorBaseHandler {
 
     @Override
     void parseDefault(JsonObject data) {
-        if (data.has("channel_0")) {
-            boolean isOn = "on".equals(data.get("channel_0").getAsString().toLowerCase());
+        if (data.has(CHANNEL_0)) {
+            boolean isOn = ON.equals(data.get(CHANNEL_0).getAsString().toLowerCase());
             updateState(CHANNEL_SWITCH_CH0, isOn ? OnOffType.ON : OnOffType.OFF);
-        } else if (data.has("channel_1")) {
-            boolean isOn = "on".equals(data.get("channel_1").getAsString().toLowerCase());
+        } else if (data.has(CHANNEL_1)) {
+            boolean isOn = ON.equals(data.get(CHANNEL_1).getAsString().toLowerCase());
             updateState(CHANNEL_SWITCH_CH1, isOn ? OnOffType.ON : OnOffType.OFF);
         }
     }

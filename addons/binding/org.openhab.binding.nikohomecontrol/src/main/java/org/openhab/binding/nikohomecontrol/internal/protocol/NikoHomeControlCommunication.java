@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2010-2017 by the respective copyright holders.
+ * Copyright (c) 2010-2018 by the respective copyright holders.
  *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
@@ -168,35 +168,31 @@ public final class NikoHomeControlCommunication {
      * Control actions. It is started after initialization of the communication.
      *
      */
-    private Runnable nhcEvents = new Runnable() {
-        @Override
-        public void run() {
-            String nhcMessage;
+    private Runnable nhcEvents = () -> {
+        String nhcMessage;
 
-            logger.debug("Niko Home Control: listening for events on thread {}", Thread.currentThread().getId());
-            listenerStopped = false;
-            nhcEventsRunning = true;
+        logger.debug("Niko Home Control: listening for events on thread {}", Thread.currentThread().getId());
+        listenerStopped = false;
+        nhcEventsRunning = true;
 
-            try {
-                while (!listenerStopped & ((nhcMessage = nhcIn.readLine()) != null)) {
-                    readMessage(nhcMessage);
-                }
-            } catch (IOException e) {
-                if (!listenerStopped) {
-                    nhcEventsRunning = false;
-                    // this is a socket error, not a communication stop triggered from outside this runnable
-                    logger.warn("Niko Home Control: IO error in listener on thread {}", Thread.currentThread().getId());
-                    // the IO has stopped working, so we need to close cleanly and try to restart
-                    restartCommunication();
-                    return;
-                }
+        try {
+            while (!listenerStopped & ((nhcMessage = nhcIn.readLine()) != null)) {
+                readMessage(nhcMessage);
             }
-
-            nhcEventsRunning = false;
-            // this is a stop from outside the runnable, so just log it and stop
-            logger.debug("Niko Home Control: event listener thread stopped on thread {}",
-                    Thread.currentThread().getId());
+        } catch (IOException e) {
+            if (!listenerStopped) {
+                nhcEventsRunning = false;
+                // this is a socket error, not a communication stop triggered from outside this runnable
+                logger.warn("Niko Home Control: IO error in listener on thread {}", Thread.currentThread().getId());
+                // the IO has stopped working, so we need to close cleanly and try to restart
+                restartCommunication();
+                return;
+            }
         }
+
+        nhcEventsRunning = false;
+        // this is a stop from outside the runnable, so just log it and stop
+        logger.debug("Niko Home Control: event listener thread stopped on thread {}", Thread.currentThread().getId());
     };
 
     /**
@@ -225,6 +221,8 @@ public final class NikoHomeControlCommunication {
                 cmdExecuteActions(((NhcMessageMap) nhcMessageGson).getData());
             } else if ("listactions".equals(event)) {
                 eventListActions(((NhcMessageListMap) nhcMessageGson).getData());
+            } else if ("getalarms".equals(event)) {
+                eventGetAlarms(((NhcMessageMap) nhcMessageGson).getData());
             } else {
                 logger.debug("Niko Home Control: not acted on json {}", nhcMessage);
             }
@@ -368,6 +366,23 @@ public final class NikoHomeControlCommunication {
         }
     }
 
+    private void eventGetAlarms(Map<String, String> data) {
+        Integer type = Integer.valueOf(data.get("type"));
+        String alarmText = data.get("text");
+        switch (type) {
+            case 0:
+                logger.debug("Niko Home Control: alarm - {}", alarmText);
+                bridgeCallBack.triggerAlarm(alarmText);
+                break;
+            case 1:
+                logger.debug("Niko Home Control: notice - {}", alarmText);
+                bridgeCallBack.triggerNotice(alarmText);
+                break;
+            default:
+                logger.debug("Niko Home Control: unexpected message type {}", type);
+        }
+    }
+
     /**
      * Called by other methods to send json cmd to Niko Home Control.
      *
@@ -378,8 +393,7 @@ public final class NikoHomeControlCommunication {
         logger.debug("Niko Home Control: send json {} from thread {}", json, Thread.currentThread().getId());
         this.nhcOut.println(json);
         if (this.nhcOut.checkError()) {
-            logger.warn("Niko Home Control: error sending message, trying to restart communication",
-                    Thread.currentThread().getId());
+            logger.warn("Niko Home Control: error sending message, trying to restart communication");
             restartCommunication();
             // retry sending after restart
             logger.debug("Niko Home Control: resend json {} from thread {}", json, Thread.currentThread().getId());

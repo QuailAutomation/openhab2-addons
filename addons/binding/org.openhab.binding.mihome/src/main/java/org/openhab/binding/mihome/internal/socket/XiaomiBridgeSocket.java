@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2010-2017 by the respective copyright holders.
+ * Copyright (c) 2010-2018 by the respective copyright holders.
  *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
@@ -24,7 +24,7 @@ import org.slf4j.LoggerFactory;
  */
 public class XiaomiBridgeSocket extends XiaomiSocket {
 
-    private static final Logger logger = LoggerFactory.getLogger(XiaomiBridgeSocket.class);
+    private final Logger logger = LoggerFactory.getLogger(XiaomiBridgeSocket.class);
 
     public XiaomiBridgeSocket(int port) {
         super(port);

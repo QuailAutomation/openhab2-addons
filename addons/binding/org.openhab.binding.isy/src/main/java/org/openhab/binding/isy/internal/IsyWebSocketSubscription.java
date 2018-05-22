@@ -122,15 +122,48 @@ public class IsyWebSocketSubscription {
             logger.debug("Node '{}' got control message '{}' action '{}'",
                     Strings.isNullOrEmpty(event.getNode()) ? "n/a" : event.getNode(), event.getControl(),
                     event.getAction());
+
+            if (this.listener == null) {
+                return;
+            }
+
+            // if control doesn't start with '_', it's likely a node value update ('ST', 'DON', 'DFOF', etc)
             if (!event.getControl().startsWith("_")) {
-                if (listener != null) {
-                    listener.onModelChanged(event);
-                }
+                // value update
+                listener.onNodeChanged(event);
             } else if ("_1".equals(event.getControl()) && "6".equals(event.getAction())) {
                 listener.onVariableChanged(event.getEventInfo().getVariableEvent());
+            } else if ("_3".equals(event.getControl())) {
+                if ("ND".equals(event.getAction())) {
+                    logger.debug("Device added {}", event.getNode());
+                    this.listener.onNodeAdded(event);
+                } else if ("NN".equals(event.getAction())) {
+                    logger.debug("Device renamed {}", event.getNode());
+                    this.listener.onNodeRenamed(event);
+                } else if ("NR".equals(event.getAction())) {
+                    // if device part of a scene, there is no extra message from the web service,
+                    // thus need to remove from linked scenes as well
+                    // also, device remove removes all sub devices, but each sub device has it's own remove WS message
+                    logger.debug("Device removed {}", event.getNode());
+                    this.listener.onNodeRemoved(event);
+                } else if ("GD".equals(event.getAction())) {
+                    logger.debug("Scene added {}", event.getNode());
+                    this.listener.onSceneAdded(event);
+                } else if ("GN".equals(event.getAction())) {
+                    logger.debug("Scene renamed {}", event.getNode());
+                    this.listener.onSceneRenamed(event);
+                } else if ("GR".equals(event.getAction())) {
+                    // this also needs to initiate removing all links to the scene
+                    logger.debug("Scene removed {}", event.getNode());
+                    this.listener.onSceneRemoved(event);
+                } else if ("MV".equals(event.getAction())) {
+                    logger.debug("Scene link added {}", event.getNode());
+                    this.listener.onSceneLinkAdded(event);
+                } else if ("RG".equals(event.getAction())) {
+                    logger.debug("Scene link removed {}", event.getNode());
+                    this.listener.onSceneLinkRemoved(event);
+                }
             }
         }
-
     }
-
 }

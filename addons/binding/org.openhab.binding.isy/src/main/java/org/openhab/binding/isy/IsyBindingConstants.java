@@ -17,6 +17,8 @@ import org.eclipse.smarthome.core.thing.ThingTypeUID;
  */
 public class IsyBindingConstants {
 
+    public static final String UPNP_DISCOVERY_KEY = "isy 994i";
+
     public static final String BINDING_ID = "isy";
 
     public final static ThingTypeUID THING_TYPE_ISYBRIDGE = new ThingTypeUID(BINDING_ID, "isyBridge");
@@ -50,6 +52,11 @@ public class IsyBindingConstants {
     public final static ThingTypeUID HIDDENDOORSENSOR_THING_TYPE = new ThingTypeUID(BINDING_ID, "hiddendoorsensor");
 
     public final static ThingTypeUID UNRECOGNIZED_SWITCH_THING_TYPE = new ThingTypeUID(BINDING_ID, "unrecognized");
+
+    public final static String BRIDGE_CONFIG_IPADDRESS = "ipAddress";
+    public final static String BRIDGE_CONFIG_SERIALNUMBER = "serial";
+    public final static String BRIDGE_CONFIG_USER = "user";
+    public final static String BRIDGE_CONFIG_PASSWORD = "password";
 
     // List of all Channel ids
     // public final static String CHANNEL_ONOFFSENSOR = "OL";

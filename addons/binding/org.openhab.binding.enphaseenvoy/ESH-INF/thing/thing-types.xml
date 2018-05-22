@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<thing:thing-descriptions bindingId="enphaseenvoy"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:thing="http://eclipse.org/smarthome/schemas/thing-description/v1.0.0"
+	xsi:schemaLocation="http://eclipse.org/smarthome/schemas/thing-description/v1.0.0 http://eclipse.org/smarthome/schemas/thing-description-1.0.0.xsd">
+
+	<bridge-type id="envoy_bridge">
+		<label>Enphase Envoy Bridge</label>
+		<description>Enphase Envoy Bridge </description>
+
+		<channels>
+			<channel id="watt_now" typeId="production_channel_watt_now" />
+			<channel id="watthours_today" typeId="production_channel_watthours_today" />
+			<channel id="watthours_sevendays" typeId="production_channel_watthours_7days" />
+			<channel id="watthours_lifetime" typeId="production_channel_watthours_lifetime" />
+		</channels>
+
+		<config-description>
+			<parameter name="hostname" type="text" required="true">
+				<label>Host Name / IP address</label>
+				<description>Host Name / IP address</description>
+			</parameter>
+			<parameter name="serialnumber" type="text" required="true">
+				<label>Serial Number</label>
+				<description>Enphase Envoy Serial Number</description>
+			</parameter>
+			<parameter name="password" type="text" required="true">
+				<label>Password</label>
+				<description>Enphase Envoy Password</description>
+			</parameter>
+			<parameter name="scanperiod" type="integer" required="false">
+				<label>Scan Period</label>
+				<description>Scan Period in Seconds</description>
+				<default>300</default>
+			</parameter>
+		</config-description>
+	</bridge-type>
+
+	<thing-type id="envoy_inverter">
+		<label>Enphase Envoy Inverter</label>
+		<description>Enphase Envoy Inverter </description>
+
+		<channels>
+			<channel id="last_report_watts" typeId="production_channel_watt_now" />
+			<channel id="max_report_watts" typeId="production_channel_watt_max" />
+			<channel id="last_report_date" typeId="production_channel_time" />
+			<channel id="devtype" typeId="devtype_channel" />
+			<channel id="serialnumber" typeId="serialnumber_channel" />
+		</channels>
+
+	</thing-type>
+
+	<channel-type id="production_channel_watt_now">
+		<item-type>Number</item-type>
+		<label>Production now (Watt)</label>
+		<description>Current Energy Production (Watt)</description>
+		<state readOnly="true" />
+	</channel-type>
+
+	<channel-type id="production_channel_watt_max">
+		<item-type>Number</item-type>
+		<label>Production max (Watt)</label>
+		<description>Max Energy Production (Watt)</description>
+		<state readOnly="true" />
+	</channel-type>
+
+	<channel-type id="production_channel_watthours_today">
+		<item-type>Number</item-type>
+		<label>Production today (Watt Hours)</label>
+		<description>Energy Production today (Watt Hours)</description>
+		<state readOnly="true" />
+	</channel-type>
+
+	<channel-type id="production_channel_watthours_7days">
+		<item-type>Number</item-type>
+		<label>Production last 7 days (Watt Hours)</label>
+		<description>Energy Production last 7 days (Watt Hours)</description>
+		<state readOnly="true" />
+	</channel-type>
+
+	<channel-type id="production_channel_watthours_lifetime">
+		<item-type>Number</item-type>
+		<label>Production total (Watt Hours)</label>
+		<description>Energy Production lifetime total (Watt Hours)</description>
+		<state readOnly="true" />
+	</channel-type>
+
+	<channel-type id="production_channel_time">
+		<item-type>String</item-type>
+		<label>Last update</label>
+		<description>Last update</description>
+		<state readOnly="true" />
+	</channel-type>
+
+	<channel-type id="devtype_channel">
+		<item-type>Number</item-type>
+		<label>Device Type</label>
+		<description>Inverter Type</description>
+		<state readOnly="true" />
+	</channel-type>
+
+	<channel-type id="serialnumber_channel">
+		<item-type>String</item-type>
+		<label>Serial Number</label>
+		<description>Inverter Serial Number</description>
+		<state readOnly="true" />
+	</channel-type>
+
+</thing:thing-descriptions>

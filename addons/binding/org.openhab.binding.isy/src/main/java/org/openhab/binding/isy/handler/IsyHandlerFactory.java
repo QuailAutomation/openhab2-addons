@@ -140,11 +140,11 @@ public class IsyHandlerFactory extends BaseThingHandlerFactory {
     private void registerIsyBridgeDiscoveryService(IsyBridgeHandler isyBridgeBridgeHandler) {
         IsyRestDiscoveryService discoveryService = new IsyRestDiscoveryService(isyBridgeBridgeHandler);
 
-        discoveryService.activate();
-
         ServiceRegistration<?> discoveryServiceRegistration = bundleContext
                 .registerService(DiscoveryService.class.getName(), discoveryService, new Hashtable<String, Object>());
+
         discoveryServiceRegistrations.put(isyBridgeBridgeHandler.getThing().getUID(), discoveryServiceRegistration);
+        discoveryService.activate();
 
         logger.debug(
                 "registerIsyBridgeDiscoveryService(): Bridge Handler - {}, Class Name - {}, Discovery Service - {}",

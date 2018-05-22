@@ -16,12 +16,29 @@ import org.openhab.binding.isy.internal.protocol.VariableEvent;
  *
  */
 public interface ISYModelChangeListener {
-    public void onModelChanged(Event event);
 
-    public void onVariableChanged(VariableEvent event);
+    public void onDeviceOffLine();
 
     public void onDeviceOnLine();
 
-    public void onDeviceOffLine();
+    public void onNodeAdded(Event event);
+
+    public void onNodeChanged(Event event);
+
+    public void onNodeRemoved(Event event);
+
+    public void onNodeRenamed(Event event);
+
+    public void onSceneAdded(Event event);
+
+    public void onSceneLinkAdded(Event event);
+
+    public void onSceneLinkRemoved(Event event);
+
+    public void onSceneRemoved(Event event);
+
+    public void onSceneRenamed(Event event);
+
+    public void onVariableChanged(VariableEvent event);
 
 }
