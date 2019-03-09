@@ -1,10 +1,14 @@
 /**
- * Copyright (c) 2010-2018 by the respective copyright holders.
+ * Copyright (c) 2010-2019 Contributors to the openHAB project
  *
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * See the NOTICE file(s) distributed with this work for additional
+ * information.
+ *
+ * This program and the accompanying materials are made available under the
+ * terms of the Eclipse Public License 2.0 which is available at
+ * http://www.eclipse.org/legal/epl-2.0
+ *
+ * SPDX-License-Identifier: EPL-2.0
  */
 package org.openhab.binding.solaredge.internal.handler;
 
@@ -48,28 +52,26 @@ public class SolarEdgeAggregateDataPolling implements Runnable {
      */
     @Override
     public void run() {
-        if (handler.getWebInterface() != null) {
-            // if no meter is present all data will be fetched by the 'LiveDataUpdateMeterless'
-            if (handler.getConfiguration().isMeterInstalled()) {
-                logger.debug("polling SolarEdge aggregate data {}", handler.getConfiguration());
+        // if no meter is present all data will be fetched by the 'LiveDataUpdateMeterless'
+        if (handler.getConfiguration().isMeterInstalled()) {
+            logger.debug("polling SolarEdge aggregate data {}", handler.getConfiguration());
 
-                List<SolarEdgeCommand> commands = new ArrayList<>();
+            List<SolarEdgeCommand> commands = new ArrayList<>();
 
-                if (handler.getConfiguration().isUsePrivateApi()) {
-                    commands.add(new AggregateDataUpdatePrivateApi(handler, AggregatePeriod.DAY));
-                    commands.add(new AggregateDataUpdatePrivateApi(handler, AggregatePeriod.WEEK));
-                    commands.add(new AggregateDataUpdatePrivateApi(handler, AggregatePeriod.MONTH));
-                    commands.add(new AggregateDataUpdatePrivateApi(handler, AggregatePeriod.YEAR));
-                } else {
-                    commands.add(new AggregateDataUpdatePublicApi(handler, AggregatePeriod.DAY));
-                    commands.add(new AggregateDataUpdatePublicApi(handler, AggregatePeriod.WEEK));
-                    commands.add(new AggregateDataUpdatePublicApi(handler, AggregatePeriod.MONTH));
-                    commands.add(new AggregateDataUpdatePublicApi(handler, AggregatePeriod.YEAR));
-                }
+            if (handler.getConfiguration().isUsePrivateApi()) {
+                commands.add(new AggregateDataUpdatePrivateApi(handler, AggregatePeriod.DAY));
+                commands.add(new AggregateDataUpdatePrivateApi(handler, AggregatePeriod.WEEK));
+                commands.add(new AggregateDataUpdatePrivateApi(handler, AggregatePeriod.MONTH));
+                commands.add(new AggregateDataUpdatePrivateApi(handler, AggregatePeriod.YEAR));
+            } else {
+                commands.add(new AggregateDataUpdatePublicApi(handler, AggregatePeriod.DAY));
+                commands.add(new AggregateDataUpdatePublicApi(handler, AggregatePeriod.WEEK));
+                commands.add(new AggregateDataUpdatePublicApi(handler, AggregatePeriod.MONTH));
+                commands.add(new AggregateDataUpdatePublicApi(handler, AggregatePeriod.YEAR));
+            }
 
-                for (SolarEdgeCommand command : commands) {
-                    handler.getWebInterface().enqueueCommand(command);
-                }
+            for (SolarEdgeCommand command : commands) {
+                handler.getWebInterface().enqueueCommand(command);
             }
         }
     }

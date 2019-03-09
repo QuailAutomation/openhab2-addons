@@ -10,9 +10,9 @@
 		<description>Kodi Mediacenter Binding</description>
 
 		<channels>
-			<channel id="volume" typeId="volume" />
-			<channel id="mute" typeId="mute" />
-			<channel id="control" typeId="control" />
+			<channel id="volume" typeId="system.volume" />
+			<channel id="mute" typeId="system.mute" />
+			<channel id="control" typeId="system.media-control" />
 			<channel id="stop" typeId="stop" />
 			<channel id="playuri" typeId="playuri" />
 			<channel id="pvr-open-tv" typeId="pvr-open-tv" />
@@ -23,16 +23,24 @@
 			<channel id="inputtext" typeId="inputtext" />
 			<channel id="inputaction" typeId="inputaction" />
 			<channel id="systemcommand" typeId="systemcommand" />
-			<channel id="title" typeId="title" />
+			<channel id="title" typeId="system.media-title" />
 			<channel id="showtitle" typeId="showtitle" />
 			<channel id="album" typeId="album" />
-			<channel id="artist" typeId="artist" />
+			<channel id="artist" typeId="system.media-artist" />
 			<channel id="mediatype" typeId="mediatype" />
 			<channel id="genreList" typeId="genreList" />
 			<channel id="thumbnail" typeId="thumbnail" />
 			<channel id="fanart" typeId="fanart" />
 			<channel id="playfavorite" typeId="playfavorite" />
 			<channel id="playnotification" typeId="playnotification" />
+			<channel id="audio-codec" typeId="codec">
+				<label>Audio Codec</label>
+				<description>Audio codec of currently playing media</description>
+			</channel>
+			<channel id="video-codec" typeId="codec">
+				<label>Video Codec</label>
+				<description>Video codec of currently playing media</description>
+			</channel>
 			<channel id="currenttime" typeId="currenttime" />
 			<channel id="currenttimepercentage" typeId="currenttimepercentage" />
 			<channel id="duration" typeId="duration" />
@@ -48,24 +56,6 @@
 	</thing-type>
 
 	<!-- Kodi Commands -->
-	<channel-type id="mute">
-		<item-type>Switch</item-type>
-		<label>Mute</label>
-		<description>Mute/unmute your device</description>
-	</channel-type>
-	<channel-type id="volume">
-		<item-type>Dimmer</item-type>
-		<label>Volume</label>
-		<description>Volume of your device</description>
-		<category>SoundVolume</category>
-		<state min="0" max="100" step="1" pattern="%d %%" />
-	</channel-type>
-	<channel-type id="control">
-		<item-type>Player</item-type>
-		<label>Control</label>
-		<description>Control the Kodi Player, e.g. start/stop/next/previous/ffward/rewind</description>
-		<category>Player</category>
-	</channel-type>
 	<channel-type id="stop">
 		<item-type>Switch</item-type>
 		<label>Stop</label>
@@ -342,13 +332,14 @@
 	<channel-type id="systemcommand" advanced="true">
 		<item-type>String</item-type>
 		<label>Send system command</label>
-		<description>Sends a system command to Kodi. This allows to shutdown/suspend/hibernate/reboot Kodi</description>
+		<description>Sends a system command to Kodi. This allows to shutdown/suspend/hibernate/reboot/quit Kodi</description>
 		<state>
 			<options>
 				<option value="Shutdown">Shutdown</option>
 				<option value="Suspend">Suspend</option>
 				<option value="Hibernate">Hibernate</option>
 				<option value="Reboot">Reboot</option>
+				<option value="Quit">Quit</option>
 			</options>
 		</state>
 	</channel-type>
@@ -358,12 +349,6 @@
 		<item-type>String</item-type>
 		<label>PVR channel title</label>
 		<description>Title of the current PVR channel</description>
-		<state readOnly="true" pattern="%s"></state>
-	</channel-type>
-	<channel-type id="title">
-		<item-type>String</item-type>
-		<label>Title</label>
-		<description>Title of the current song</description>
 		<state readOnly="true" pattern="%s"></state>
 	</channel-type>
 	<channel-type id="showtitle">
@@ -376,12 +361,6 @@
 		<item-type>String</item-type>
 		<label>Album</label>
 		<description>Album name of the current song</description>
-		<state readOnly="true" pattern="%s"></state>
-	</channel-type>
-	<channel-type id="artist">
-		<item-type>String</item-type>
-		<label>Artist</label>
-		<description>Artist name of the current song</description>
 		<state readOnly="true" pattern="%s"></state>
 	</channel-type>
 	<channel-type id="mediatype">
@@ -407,6 +386,12 @@
 		<label>Fanart</label>
 		<description>The current fanart</description>
 		<state readOnly="true"></state>
+	</channel-type>
+	<channel-type id="codec" advanced="true">
+		<item-type>String</item-type>
+		<label>Codec</label>
+		<description>Codec of currently playing media</description>
+		<state readOnly="true" pattern="%s" />
 	</channel-type>
 	<channel-type id="currenttime">
 		<item-type>Number:Time</item-type>

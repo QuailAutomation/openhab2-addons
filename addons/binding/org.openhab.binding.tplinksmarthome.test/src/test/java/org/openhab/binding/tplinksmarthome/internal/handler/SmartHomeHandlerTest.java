@@ -1,10 +1,14 @@
 /**
- * Copyright (c) 2010-2018 by the respective copyright holders.
+ * Copyright (c) 2010-2019 Contributors to the openHAB project
  *
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * See the NOTICE file(s) distributed with this work for additional
+ * information.
+ *
+ * This program and the accompanying materials are made available under the
+ * terms of the Eclipse Public License 2.0 which is available at
+ * http://www.eclipse.org/legal/epl-2.0
+ *
+ * SPDX-License-Identifier: EPL-2.0
  */
 package org.openhab.binding.tplinksmarthome.internal.handler;
 
@@ -24,7 +28,6 @@ import org.eclipse.smarthome.core.thing.ChannelUID;
 import org.eclipse.smarthome.core.thing.Thing;
 import org.eclipse.smarthome.core.thing.ThingStatus;
 import org.eclipse.smarthome.core.thing.ThingStatusInfo;
-import org.eclipse.smarthome.core.thing.binding.ThingHandler;
 import org.eclipse.smarthome.core.thing.binding.ThingHandlerCallback;
 import org.eclipse.smarthome.core.types.RefreshType;
 import org.eclipse.smarthome.core.types.State;
@@ -37,6 +40,7 @@ import org.mockito.Mockito;
 import org.openhab.binding.tplinksmarthome.internal.Commands;
 import org.openhab.binding.tplinksmarthome.internal.Connection;
 import org.openhab.binding.tplinksmarthome.internal.TPLinkSmartHomeConfiguration;
+import org.openhab.binding.tplinksmarthome.internal.TPLinkSmartHomeDiscoveryService;
 import org.openhab.binding.tplinksmarthome.internal.device.SmartHomeDevice;
 import org.openhab.binding.tplinksmarthome.internal.model.ModelTestUtil;
 
@@ -49,7 +53,7 @@ public class SmartHomeHandlerTest {
 
     private static final String CHANNEL_PREFIX = "binding:tplinksmarthome:1234:";
 
-    private ThingHandler handler;
+    private SmartHomeHandler handler;
 
     @Mock
     private Connection connection;
@@ -59,9 +63,10 @@ public class SmartHomeHandlerTest {
     private Thing thing;
     @Mock
     private SmartHomeDevice smartHomeDevice;
+    @Mock
+    private TPLinkSmartHomeDiscoveryService discoveryService;
 
-    @NonNull
-    private final Configuration configuration = new Configuration();
+    private @NonNull final Configuration configuration = new Configuration();
 
     @Before
     public void setUp() throws IOException {
@@ -72,7 +77,7 @@ public class SmartHomeHandlerTest {
         when(smartHomeDevice.getUpdateCommand()).thenReturn(Commands.getSysinfo());
         when(connection.sendCommand(Commands.getSysinfo()))
                 .thenReturn(ModelTestUtil.readJson("plug_get_sysinfo_response"));
-        handler = new SmartHomeHandler(thing, smartHomeDevice) {
+        handler = new SmartHomeHandler(thing, smartHomeDevice, discoveryService) {
             @Override
             Connection createConnection(TPLinkSmartHomeConfiguration config) {
                 return connection;
@@ -99,6 +104,7 @@ public class SmartHomeHandlerTest {
 
     @Test
     public void testHandleCommandRefreshType() {
+        handler.initialize();
         assertHandleCommandRefreshType(-53);
     }
 
@@ -106,6 +112,7 @@ public class SmartHomeHandlerTest {
     public void testHandleCommandRefreshTypeRangeExtender() throws IOException {
         when(connection.sendCommand(Commands.getSysinfo()))
                 .thenReturn(ModelTestUtil.readJson("rangeextender_get_sysinfo_response"));
+        handler.initialize();
         assertHandleCommandRefreshType(-70);
     }
 
@@ -127,5 +134,11 @@ public class SmartHomeHandlerTest {
         ArgumentCaptor<State> stateCaptor = ArgumentCaptor.forClass(State.class);
         verify(callback).stateUpdated(eq(channelUID), stateCaptor.capture());
         assertSame("State of channel switch should be set", OnOffType.ON, stateCaptor.getValue());
+    }
+
+    @Test
+    public void testRefreshChannels() {
+        handler.initialize();
+        handler.refreshChannels();
     }
 }

@@ -1,10 +1,14 @@
 /**
- * Copyright (c) 2010-2018 by the respective copyright holders.
+ * Copyright (c) 2010-2019 Contributors to the openHAB project
  *
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * See the NOTICE file(s) distributed with this work for additional
+ * information.
+ *
+ * This program and the accompanying materials are made available under the
+ * terms of the Eclipse Public License 2.0 which is available at
+ * http://www.eclipse.org/legal/epl-2.0
+ *
+ * SPDX-License-Identifier: EPL-2.0
  */
 package org.openhab.binding.valloxmv.internal;
 
@@ -47,46 +51,40 @@ import org.slf4j.LoggerFactory;
  * @author Björn Brings - Initial contribution
  */
 public class ValloxMVWebSocket {
-    private final String ip;
     private final ValloxMVHandler voHandler;
-    private WebSocketClient client;
+    private final WebSocketClient client;
+    private final URI destUri;
     private ValloxMVWebSocketListener socket;
 
     private final Logger logger = LoggerFactory.getLogger(ValloxMVWebSocket.class);
 
-    public ValloxMVWebSocket(ValloxMVHandler voHandler, String ip) {
+    public ValloxMVWebSocket(WebSocketClient webSocketClient, ValloxMVHandler voHandler, String ip) {
         this.voHandler = voHandler;
-        this.ip = ip;
-        client = new WebSocketClient();
+        this.client = webSocketClient;
+        URI tempUri;
+        try {
+            tempUri = new URI("ws://" + ip + ":80");
+        } catch (URISyntaxException e) {
+            tempUri = null;
+            connectionError(e);
+        }
+        destUri = tempUri;
     }
 
     public void request(ChannelUID channelUID, String updateState) {
         try {
             socket = new ValloxMVWebSocketListener(channelUID, updateState);
-            client.start();
-
-            URI destUri = new URI("ws://" + ip + ":80");
 
             ClientUpgradeRequest request = new ClientUpgradeRequest();
             logger.debug("Connecting to: {}", destUri);
             client.connect(socket, destUri, request);
             socket.awaitClose(2, TimeUnit.SECONDS);
-        } catch (URISyntaxException | InterruptedException | IOException e) {
+        } catch (InterruptedException | IOException e) {
             connectionError(e);
         } catch (Exception e) {
             logger.debug("Unexpected error");
             connectionError(e);
         }
-    }
-
-    public void close() {
-        try {
-            client.stop();
-        } catch (Exception e) {
-            logger.debug("Error while closing connection: {}", e);
-        }
-        client.destroy();
-        client = null;
     }
 
     public void connectionError(Exception e) {
@@ -201,8 +199,16 @@ public class ValloxMVWebSocket {
                 request.put(20486, Integer.parseInt(updateState));
             } else if (ValloxMVBindingConstants.CHANNEL_HOME_SPEED_SETTING.equals(channelUID.getId())) {
                 request.put(20507, Integer.parseInt(updateState));
+            } else if (ValloxMVBindingConstants.CHANNEL_AWAY_SPEED_SETTING.equals(channelUID.getId())) {
+                request.put(20501, Integer.parseInt(updateState));
+            } else if (ValloxMVBindingConstants.CHANNEL_BOOST_SPEED_SETTING.equals(channelUID.getId())) {
+                request.put(20513, Integer.parseInt(updateState));
             } else if (ValloxMVBindingConstants.CHANNEL_HOME_AIR_TEMP_TARGET.equals(channelUID.getId())) {
                 request.put(20508, Integer.parseInt(updateState));
+            } else if (ValloxMVBindingConstants.CHANNEL_AWAY_AIR_TEMP_TARGET.equals(channelUID.getId())) {
+                request.put(20502, Integer.parseInt(updateState));
+            } else if (ValloxMVBindingConstants.CHANNEL_BOOST_AIR_TEMP_TARGET.equals(channelUID.getId())) {
+                request.put(20514, Integer.parseInt(updateState));
             } else {
                 return null;
             }
@@ -274,7 +280,11 @@ public class ValloxMVWebSocket {
                 int bdSuppFanBalanceBase = getNumber(bytes, 376);
 
                 int bdHomeSpeedSetting = getNumber(bytes, 418);
+                int bdAwaySpeedSetting = getNumber(bytes, 406);
+                int bdBoostSpeedSetting = getNumber(bytes, 430);
                 BigDecimal bdHomeAirTempTarget = getTemperature(bytes, 420);
+                BigDecimal bdAwayAirTempTarget = getTemperature(bytes, 408);
+                BigDecimal bdBoostAirTempTarget = getTemperature(bytes, 432);
 
                 BigDecimal bdState;
                 if (bdFireplaceTimer > 0) {
@@ -323,8 +333,16 @@ public class ValloxMVWebSocket {
                         new QuantityType<>(bdSuppFanBalanceBase, SmartHomeUnits.PERCENT));
                 updateChannel(ValloxMVBindingConstants.CHANNEL_HOME_SPEED_SETTING,
                         new QuantityType<>(bdHomeSpeedSetting, SmartHomeUnits.PERCENT));
+                updateChannel(ValloxMVBindingConstants.CHANNEL_AWAY_SPEED_SETTING,
+                        new QuantityType<>(bdAwaySpeedSetting, SmartHomeUnits.PERCENT));
+                updateChannel(ValloxMVBindingConstants.CHANNEL_BOOST_SPEED_SETTING,
+                        new QuantityType<>(bdBoostSpeedSetting, SmartHomeUnits.PERCENT));
                 updateChannel(ValloxMVBindingConstants.CHANNEL_HOME_AIR_TEMP_TARGET,
                         new QuantityType<>(bdHomeAirTempTarget, SIUnits.CELSIUS));
+                updateChannel(ValloxMVBindingConstants.CHANNEL_AWAY_AIR_TEMP_TARGET,
+                        new QuantityType<>(bdAwayAirTempTarget, SIUnits.CELSIUS));
+                updateChannel(ValloxMVBindingConstants.CHANNEL_BOOST_AIR_TEMP_TARGET,
+                        new QuantityType<>(bdBoostAirTempTarget, SIUnits.CELSIUS));
 
                 voHandler.updateStatus(ThingStatus.ONLINE);
                 voHandler.dataUpdated();

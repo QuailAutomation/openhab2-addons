@@ -1,34 +1,41 @@
 /**
- * Copyright (c) 2010-2018 by the respective copyright holders.
+ * Copyright (c) 2010-2019 Contributors to the openHAB project
  *
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * See the NOTICE file(s) distributed with this work for additional
+ * information.
+ *
+ * This program and the accompanying materials are made available under the
+ * terms of the Eclipse Public License 2.0 which is available at
+ * http://www.eclipse.org/legal/epl-2.0
+ *
+ * SPDX-License-Identifier: EPL-2.0
  */
 package org.openhab.binding.solaredge.internal.config;
 
 import org.apache.commons.lang.builder.ToStringBuilder;
+import org.eclipse.jdt.annotation.NonNullByDefault;
+import org.eclipse.jdt.annotation.Nullable;
 
 /**
  * Bean holding configuration data according to bridge.xml
  *
  * @author Alexander Friese - initial contribution
  */
+@NonNullByDefault
 public class SolarEdgeConfiguration {
 
-    private String tokenOrApiKey;
-    private String solarId;
+    private @Nullable String tokenOrApiKey;
+    private @Nullable String solarId;
 
     private boolean meterInstalled = false;
     private boolean usePrivateApi = false;
 
     private Integer asyncTimeout = 120;
     private Integer syncTimeout = 120;
-    private Integer liveDataPollingInterval;
-    private Integer aggregateDataPollingInterval;
+    private Integer liveDataPollingInterval = 10;
+    private Integer aggregateDataPollingInterval = 60;
 
-    public String getTokenOrApiKey() {
+    public @Nullable String getTokenOrApiKey() {
         return tokenOrApiKey;
     }
 
@@ -36,7 +43,7 @@ public class SolarEdgeConfiguration {
         this.tokenOrApiKey = tokenOrApiKey;
     }
 
-    public String getSolarId() {
+    public @Nullable String getSolarId() {
         return solarId;
     }
 

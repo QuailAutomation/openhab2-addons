@@ -16,6 +16,12 @@
 		<state max="100" min="0" step="1" pattern="%d %%" readOnly="false"></state>
 	</channel-type>
 
+	<channel-type id="rawMessage">
+		<item-type>String</item-type>
+		<label>Raw Message</label>
+		<description>Channel for raw messages. No parsing is done on these messages.</description>
+	</channel-type>
+
 	<channel-type id="brightness">
 		<item-type>Dimmer</item-type>
 		<label>Brightness</label>
@@ -68,11 +74,6 @@
 		<description>This channel controls the volume of the gateway for playing sounds</description>
 		<category>SoundVolume</category>
 		<state max="100" min="0" step="1" pattern="%d %%" readOnly="false"></state>
-	</channel-type>
-
-	<channel-type id="joinPermission">
-		<item-type>Switch</item-type>
-		<label>Enable Device Inclusion</label>
 	</channel-type>
 
 	<channel-type id="enableSound">

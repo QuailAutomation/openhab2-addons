@@ -1,10 +1,14 @@
 /**
- * Copyright (c) 2010-2018 by the respective copyright holders.
+ * Copyright (c) 2010-2019 Contributors to the openHAB project
  *
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * See the NOTICE file(s) distributed with this work for additional
+ * information.
+ *
+ * This program and the accompanying materials are made available under the
+ * terms of the Eclipse Public License 2.0 which is available at
+ * http://www.eclipse.org/legal/epl-2.0
+ *
+ * SPDX-License-Identifier: EPL-2.0
  */
 package org.openhab.binding.network.internal;
 
@@ -22,7 +26,9 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
-import org.apache.commons.lang.StringUtils;
+import org.eclipse.jdt.annotation.NonNullByDefault;
+import org.eclipse.jdt.annotation.Nullable;
+import org.eclipse.smarthome.core.cache.ExpiringCache;
 import org.openhab.binding.network.internal.dhcp.DHCPListenService;
 import org.openhab.binding.network.internal.dhcp.IPRequestReceivedCallback;
 import org.openhab.binding.network.internal.toberemoved.cache.ExpiringCacheAsync;
@@ -35,34 +41,41 @@ import org.slf4j.LoggerFactory;
 /**
  * The {@link PresenceDetection} handles the connection to the Device
  *
- * @author David Gräff, 2017 - Rewritten
  * @author Marc Mettke - Initial contribution
+ * @author David Gräff, 2017 - Rewritten
+ * @author Jan N. Klug - refactored host name resolution
  */
+@NonNullByDefault
 public class PresenceDetection implements IPRequestReceivedCallback {
     public static final double NOT_REACHABLE = -1;
+    public static final int DESTINATION_TTL = 300 * 1000; // in ms, 300 s
+
     NetworkUtils networkUtils = new NetworkUtils();
-    private Logger logger = LoggerFactory.getLogger(PresenceDetection.class);
+    private final Logger logger = LoggerFactory.getLogger(PresenceDetection.class);
 
     /// Configuration variables
     private boolean useDHCPsniffing = false;
-    private ArpPingUtilEnum arpPingMethod = null;
-    private String arpPingUtilPath = "arping";
-    private IpPingMethodEnum pingMethod = null;
+    private String arpPingState = "Disabled";
+    private String ipPingState = "Disabled";
+    protected String arpPingUtilPath = "";
+    protected ArpPingUtilEnum arpPingMethod = ArpPingUtilEnum.UNKNOWN_TOOL;
+    protected @Nullable IpPingMethodEnum pingMethod = null;
     private boolean iosDevice;
-    private Set<Integer> tcpPorts = new HashSet<Integer>();
+    private Set<Integer> tcpPorts = new HashSet<>();
 
     private long refreshIntervalInMS = 60000;
     private int timeoutInMS = 5000;
     private long lastSeenInMS;
 
-    private String hostname;
+    private @NonNullByDefault({}) String hostname;
+    private @NonNullByDefault({}) ExpiringCache<@Nullable InetAddress> destination;
+    private @Nullable InetAddress cachedDestination = null;
 
     /// State variables (cannot be final because of test dependency injections)
     ExpiringCacheAsync<PresenceDetectionValue> cache;
     private final PresenceDetectionListener updateListener;
-    private ScheduledFuture<?> refreshJob;
-    private InetAddress destination;
-    ExecutorService executorService;
+    private @Nullable ScheduledFuture<?> refreshJob;
+    protected @Nullable ExecutorService executorService;
     private String dhcpState = "off";
     Integer currentCheck = 0;
     int detectionChecks;
@@ -75,7 +88,7 @@ public class PresenceDetection implements IPRequestReceivedCallback {
         });
     }
 
-    public String getHostname() {
+    public @Nullable String getHostname() {
         return hostname;
     }
 
@@ -91,16 +104,32 @@ public class PresenceDetection implements IPRequestReceivedCallback {
         return timeoutInMS;
     }
 
-    public void setHostname(String hostname) throws UnknownHostException {
+    public void setHostname(String hostname) {
         this.hostname = hostname;
-        this.destination = InetAddress.getByName(hostname);
-        if (arpPingMethod != null) {
-            if (destination instanceof Inet4Address) {
-                setUseArpPing(true, arpPingUtilPath);
-            } else {
-                arpPingMethod = null;
+        this.destination = new ExpiringCache<@Nullable InetAddress>(DESTINATION_TTL, () -> {
+            try {
+                InetAddress destinationAddress = InetAddress.getByName(hostname);
+                if (!destinationAddress.equals(cachedDestination)) {
+                    logger.trace("host name resolved to other address, (re-)setup presence detection");
+                    setUseArpPing(true, destinationAddress);
+                    if (useDHCPsniffing) {
+                        if (cachedDestination != null) {
+                            disableDHCPListen(cachedDestination);
+                        }
+                        enableDHCPListen(destinationAddress);
+                    }
+                    cachedDestination = destinationAddress;
+                }
+                return destinationAddress;
+            } catch (UnknownHostException e) {
+                logger.trace("hostname resolution failed");
+                if (cachedDestination != null) {
+                    disableDHCPListen(cachedDestination);
+                    cachedDestination = null;
+                }
+                return null;
             }
-        }
+        });
     }
 
     public void setServicePorts(Set<Integer> ports) {
@@ -126,13 +155,18 @@ public class PresenceDetection implements IPRequestReceivedCallback {
      * @param useSystemPing Set to true to use a system ping method, false to use java ping and null to disable ICMP
      *            pings.
      */
-    public void setUseIcmpPing(Boolean useSystemPing) {
+    public void setUseIcmpPing(@Nullable Boolean useSystemPing) {
         if (useSystemPing == null) {
+            ipPingState = "Disabled";
             pingMethod = null;
         } else if (useSystemPing) {
-            pingMethod = networkUtils.determinePingMethod();
+            final IpPingMethodEnum pingMethod = networkUtils.determinePingMethod();
+            this.pingMethod = pingMethod;
+            ipPingState = pingMethod == IpPingMethodEnum.JAVA_PING ? "System ping feature test failed. Using Java ping"
+                    : pingMethod.name();
         } else {
             pingMethod = IpPingMethodEnum.JAVA_PING;
+            ipPingState = "Java ping";
         }
     }
 
@@ -142,26 +176,61 @@ public class PresenceDetection implements IPRequestReceivedCallback {
      * it will be disabled as well.
      *
      * @param enable Enable or disable ARP ping
-     * @param arpPingUtilPath The file path to the utility
+     * @param arpPingUtilPath c
      */
-    public void setUseArpPing(boolean enable, String arpPingUtilPath) {
-        this.arpPingUtilPath = arpPingUtilPath;
-        if (!enable || StringUtils.isBlank(arpPingUtilPath)) {
-            arpPingMethod = null;
+    private void setUseArpPing(boolean enable, @Nullable InetAddress destinationAddress) {
+        if (!enable || arpPingUtilPath.isEmpty()) {
+            arpPingState = "Disabled";
+            arpPingMethod = ArpPingUtilEnum.UNKNOWN_TOOL;
             return;
-        } else if (destination == null || !(destination instanceof Inet4Address)) {
-            arpPingMethod = null;
+        } else if (destinationAddress == null || !(destinationAddress instanceof Inet4Address)) {
+            arpPingState = "Destination is not a valid IPv4 address";
+            arpPingMethod = ArpPingUtilEnum.UNKNOWN_TOOL;
             return;
         }
-        arpPingMethod = networkUtils.determineNativeARPpingMethod(arpPingUtilPath);
+
+        switch (arpPingMethod) {
+            case UNKNOWN_TOOL: {
+                arpPingState = "Unknown arping tool";
+                break;
+            }
+            case THOMAS_HABERT_ARPING: {
+                arpPingState = "Arping tool by Thomas Habets";
+                break;
+            }
+            case THOMAS_HABERT_ARPING_WITHOUT_TIMEOUT: {
+                arpPingState = "Arping tool by Thomas Habets (old version)";
+                break;
+            }
+            case ELI_FULKERSON_ARP_PING_FOR_WINDOWS: {
+                arpPingState = "Eli Fulkerson ARPing tool for Windows";
+                break;
+            }
+            case IPUTILS_ARPING: {
+                arpPingState = "Ipuitls Arping";
+                break;
+            }
+        }
     }
 
-    public ArpPingUtilEnum arpPingMethod() {
-        return arpPingMethod;
+    /**
+     * sets the path to arp ping
+     *
+     * @param enable Enable or disable ARP ping
+     * @param arpPingUtilPath enableDHCPListen(useDHCPsniffing);
+     */
+    public void setUseArpPing(boolean enable, String arpPingUtilPath, ArpPingUtilEnum arpPingUtilMethod) {
+        setUseArpPing(enable, destination.getValue());
+        this.arpPingUtilPath = arpPingUtilPath;
+        this.arpPingMethod = arpPingUtilMethod;
     }
 
-    public IpPingMethodEnum getPingMethod() {
-        return pingMethod;
+    public String getArpPingState() {
+        return arpPingState;
+    }
+
+    public String getIPPingState() {
+        return ipPingState;
     }
 
     public String getDhcpState() {
@@ -241,7 +310,7 @@ public class PresenceDetection implements IPRequestReceivedCallback {
         if (pingMethod != null) {
             detectionChecks += 1;
         }
-        if (arpPingMethod != null) {
+        if (arpPingMethod != ArpPingUtilEnum.UNKNOWN_TOOL) {
             interfaceNames = networkUtils.getInterfaceNames();
             detectionChecks += interfaceNames.size();
         }
@@ -250,7 +319,8 @@ public class PresenceDetection implements IPRequestReceivedCallback {
             return false;
         }
 
-        executorService = getThreadsFor(detectionChecks);
+        final ExecutorService executorService = getThreadsFor(detectionChecks);
+        this.executorService = executorService;
 
         for (Integer tcpPort : tcpPorts) {
             executorService.execute(() -> {
@@ -260,14 +330,22 @@ public class PresenceDetection implements IPRequestReceivedCallback {
             });
         }
 
-        // ARP ping for IPv4 addresses. Use an own executor for each network interface
-        if (interfaceNames != null) {
+        // ARP ping for IPv4 addresses. Use single executor for Windows tool and 
+        // each own executor for each network interface for other tools
+        if (arpPingMethod == ArpPingUtilEnum.ELI_FULKERSON_ARP_PING_FOR_WINDOWS) {
+            executorService.execute(() -> {
+               Thread.currentThread().setName("presenceDetectionARP_" + hostname + " ");
+               // arp-ping.exe tool capable of handling multiple interfaces by itself
+               performARPping("");
+               checkIfFinished();
+            });
+        } else if (interfaceNames != null) {                        
             for (final String interfaceName : interfaceNames) {
                 executorService.execute(() -> {
-                    Thread.currentThread().setName("presenceDetectionARP_" + hostname + " " + interfaceName);
-                    performARPping(interfaceName);
-                    checkIfFinished();
-                });
+                   Thread.currentThread().setName("presenceDetectionARP_" + hostname + " " + interfaceName);
+                   performARPping(interfaceName);
+                   checkIfFinished();
+               });               
             }
         }
 
@@ -299,11 +377,12 @@ public class PresenceDetection implements IPRequestReceivedCallback {
      */
     private synchronized void submitFinalResult() {
         // Do nothing if we are not in a detection process
-        if (executorService == null) {
+        ExecutorService service = executorService;
+        if (service == null) {
             return;
         }
         // Finish the detection process
-        executorService.shutdownNow();
+        service.shutdownNow();
         executorService = null;
         detectionChecks = 0;
 
@@ -313,12 +392,17 @@ public class PresenceDetection implements IPRequestReceivedCallback {
         // Therefore use lastSeenInMS here and not cache.isExpired() to determine if we got a ping response.
         if (lastSeenInMS + timeoutInMS + 100 < System.currentTimeMillis()) {
             // We haven't seen the device in the detection process
-            v = new PresenceDetectionValue(destination.getHostAddress(), -1);
+            v = new PresenceDetectionValue(hostname, -1);
         } else {
             // Make the cache valid again and submit the value.
             v = cache.getExpiredValue();
         }
         cache.setValue(v);
+
+        if (!v.isReachable()) {
+            // if target can't be reached, check if name resolution need to be updated
+            destination.invalidateValue();
+        }
         updateListener.finalDetectionResult(v);
     }
 
@@ -341,16 +425,17 @@ public class PresenceDetection implements IPRequestReceivedCallback {
      * if no presence detection is performed right now.
      */
     public void waitForPresenceDetection() {
-        if (executorService == null) {
+        ExecutorService service = executorService;
+        if (service == null) {
             return;
         }
         try {
             // We may get interrupted here by cancelRefreshJob().
-            executorService.awaitTermination(timeoutInMS + 100, TimeUnit.MILLISECONDS);
+            service.awaitTermination(timeoutInMS + 100, TimeUnit.MILLISECONDS);
             submitFinalResult();
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt(); // Reset interrupt flag
-            executorService.shutdownNow();
+            service.shutdownNow();
             executorService = null;
         }
     }
@@ -370,7 +455,7 @@ public class PresenceDetection implements IPRequestReceivedCallback {
         lastSeenInMS = System.currentTimeMillis();
         PresenceDetectionValue v;
         if (cache.isExpired()) {
-            v = new PresenceDetectionValue(destination.getHostAddress(), 0);
+            v = new PresenceDetectionValue(hostname, 0);
         } else {
             v = cache.getExpiredValue();
         }
@@ -384,7 +469,9 @@ public class PresenceDetection implements IPRequestReceivedCallback {
         logger.trace("Perform TCP presence detection for {} on port: {}", hostname, tcpPort);
         try {
             double pingTime = System.nanoTime();
-            if (networkUtils.servicePing(destination.getHostAddress(), tcpPort, timeoutInMS)) {
+            InetAddress destinationAddress = destination.getValue();
+            if (destinationAddress != null
+                    && networkUtils.servicePing(destinationAddress.getHostAddress(), tcpPort, timeoutInMS)) {
                 final double latency = Math.round((System.nanoTime() - pingTime) / 1000000.0f);
                 PresenceDetectionValue v = updateReachableValue(PresenceDetectionType.TCP_CONNECTION, latency);
                 v.addReachableTcpService(tcpPort);
@@ -407,13 +494,17 @@ public class PresenceDetection implements IPRequestReceivedCallback {
     protected void performARPping(String interfaceName) {
         try {
             logger.trace("Perform ARP ping presence detection for {} on interface: {}", hostname, interfaceName);
+            InetAddress destinationAddress = destination.getValue();
+            if (destinationAddress == null) {
+                return;
+            }
             if (iosDevice) {
-                networkUtils.wakeUpIOS(destination);
+                networkUtils.wakeUpIOS(destinationAddress);
                 Thread.sleep(50);
             }
             double pingTime = System.nanoTime();
-            if (networkUtils.nativeARPPing(arpPingMethod, arpPingUtilPath, interfaceName, destination.getHostAddress(),
-                    timeoutInMS)) {
+            if (networkUtils.nativeARPPing(arpPingMethod, arpPingUtilPath, interfaceName,
+                    destinationAddress.getHostAddress(), timeoutInMS)) {
                 final double latency = Math.round((System.nanoTime() - pingTime) / 1000000.0f);
                 PresenceDetectionValue v = updateReachableValue(PresenceDetectionType.ARP_PING, latency);
                 updateListener.partialDetectionResult(v);
@@ -435,7 +526,11 @@ public class PresenceDetection implements IPRequestReceivedCallback {
         try {
             logger.trace("Perform java ping presence detection for {}", hostname);
             double pingTime = System.nanoTime();
-            if (destination.isReachable(timeoutInMS)) {
+            InetAddress destinationAddress = destination.getValue();
+            if (destinationAddress == null) {
+                return;
+            }
+            if (destinationAddress.isReachable(timeoutInMS)) {
                 final double latency = Math.round((System.nanoTime() - pingTime) / 1000000.0f);
                 PresenceDetectionValue v = updateReachableValue(PresenceDetectionType.ICMP_PING, latency);
                 updateListener.partialDetectionResult(v);
@@ -449,7 +544,11 @@ public class PresenceDetection implements IPRequestReceivedCallback {
         try {
             logger.trace("Perform native ping presence detection for {}", hostname);
             double pingTime = System.nanoTime();
-            if (networkUtils.nativePing(pingMethod, destination.getHostAddress(), timeoutInMS)) {
+            InetAddress destinationAddress = destination.getValue();
+            if (destinationAddress == null) {
+                return;
+            }
+            if (networkUtils.nativePing(pingMethod, destinationAddress.getHostAddress(), timeoutInMS)) {
                 final double latency = Math.round((System.nanoTime() - pingTime) / 1000000.0f);
                 PresenceDetectionValue v = updateReachableValue(PresenceDetectionType.ICMP_PING, latency);
                 updateListener.partialDetectionResult(v);
@@ -473,13 +572,12 @@ public class PresenceDetection implements IPRequestReceivedCallback {
      * @param scheduledExecutorService A scheduler to run pings periodically.
      */
     public void startAutomaticRefresh(ScheduledExecutorService scheduledExecutorService) {
-        if (refreshJob != null && !refreshJob.isDone()) {
-            refreshJob.cancel(true);
+        ScheduledFuture<?> future = refreshJob;
+        if (future != null && !future.isDone()) {
+            future.cancel(true);
         }
         refreshJob = scheduledExecutorService.scheduleWithFixedDelay(() -> performPresenceDetection(true), 0,
                 refreshIntervalInMS, TimeUnit.MILLISECONDS);
-
-        enableDHCPListen(useDHCPsniffing);
     }
 
     /**
@@ -493,36 +591,39 @@ public class PresenceDetection implements IPRequestReceivedCallback {
      * Stop automatic refreshing.
      */
     public void stopAutomaticRefresh() {
-        if (refreshJob != null && !refreshJob.isDone()) {
-            refreshJob.cancel(true);
+        ScheduledFuture<?> future = refreshJob;
+        if (future != null && !future.isDone()) {
+            future.cancel(true);
             refreshJob = null;
         }
-        enableDHCPListen(false);
+        if (cachedDestination != null) {
+            disableDHCPListen(cachedDestination);
+        }
     }
 
     /**
-     * Enables/Disables listing for dhcp packets to figure out if devices have entered the network. This does not work
+     * Enables listing for dhcp packets to figure out if devices have entered the network. This does not work
      * for iOS devices. The hostname of this network service object will be registered to the dhcp request packet
      * listener if enabled and unregistered otherwise.
      *
-     * @param enabled Enable/Disable the dhcp listen service for this hostname.
+     * @param destinationAddress the InetAddress to listen for.
      */
-    private void enableDHCPListen(boolean enabled) {
-        if (enabled) {
-            try {
-                if (DHCPListenService.register(destination.getHostAddress(), this).isUseUnprevilegedPort()) {
-                    dhcpState = "No access right for port 67. Bound to port 6767 instead. Port forwarding necessary!";
-                } else {
-                    dhcpState = "Running normally";
-                }
-            } catch (SocketException e) {
-                logger.warn("Cannot use DHCP sniffing.", e);
-                useDHCPsniffing = false;
-                dhcpState = "Cannot use DHCP sniffing: " + e.getLocalizedMessage();
+    private void enableDHCPListen(InetAddress destinationAddress) {
+        try {
+            if (DHCPListenService.register(destinationAddress.getHostAddress(), this).isUseUnprevilegedPort()) {
+                dhcpState = "No access right for port 67. Bound to port 6767 instead. Port forwarding necessary!";
+            } else {
+                dhcpState = "Running normally";
             }
-        } else {
-            DHCPListenService.unregister(destination.getHostAddress());
-            dhcpState = "off";
+        } catch (SocketException e) {
+            logger.warn("Cannot use DHCP sniffing.", e);
+            useDHCPsniffing = false;
+            dhcpState = "Cannot use DHCP sniffing: " + e.getLocalizedMessage();
         }
+    }
+
+    private void disableDHCPListen(InetAddress destinationAddress) {
+        DHCPListenService.unregister(destinationAddress.getHostAddress());
+        dhcpState = "off";
     }
 }

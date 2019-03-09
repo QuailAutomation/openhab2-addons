@@ -1,10 +1,14 @@
 /**
- * Copyright (c) 2010-2018 by the respective copyright holders.
+ * Copyright (c) 2010-2019 Contributors to the openHAB project
  *
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * See the NOTICE file(s) distributed with this work for additional
+ * information.
+ *
+ * This program and the accompanying materials are made available under the
+ * terms of the Eclipse Public License 2.0 which is available at
+ * http://www.eclipse.org/legal/epl-2.0
+ *
+ * SPDX-License-Identifier: EPL-2.0
  */
 package org.openhab.binding.mihome.internal;
 
@@ -27,6 +31,7 @@ public class XiaomiGatewayBindingConstants {
 
     public static final ThingTypeUID THING_TYPE_BRIDGE = new ThingTypeUID(BINDING_ID, "bridge");
     public static final ThingTypeUID THING_TYPE_GATEWAY = new ThingTypeUID(BINDING_ID, "gateway");
+    public static final ThingTypeUID THING_TYPE_BASIC = new ThingTypeUID(BINDING_ID, "basic");
     // sensors
     public static final ThingTypeUID THING_TYPE_SENSOR_HT = new ThingTypeUID(BINDING_ID, "sensor_ht");
     public static final ThingTypeUID THING_TYPE_SENSOR_AQARA_WEATHER_V1 = new ThingTypeUID(BINDING_ID,
@@ -89,8 +94,6 @@ public class XiaomiGatewayBindingConstants {
     public static final String CHANNEL_ORIENTATION_Y = "orientationY";
     public static final String CHANNEL_ORIENTATION_Z = "orientationZ";
     public static final String CHANNEL_BED_ACTIVITY = "bedActivity";
-    // gateway general
-    public static final String CHANNEL_GATEWAY_JOIN_PERMISSION = "joinPermission";
     // gateway sound
     public static final String CHANNEL_GATEWAY_SOUND_SWITCH = "enableSound";
     public static final String CHANNEL_GATEWAY_SOUND = "sound";
@@ -124,4 +127,12 @@ public class XiaomiGatewayBindingConstants {
 
     // Item config properties
     public static final String ITEM_ID = "itemId";
+
+    // Basic Device channels
+    public static final String CHANNEL_REPORT_MSG = "reportMessage";
+    public static final String CHANNEL_HEARTBEAT_MSG = "heartbeatMessage";
+    public static final String CHANNEL_READ_ACK_MSG = "readAckMessage";
+    public static final String CHANNEL_WRITE_ACK_MSG = "writeAckMessage";
+    public static final String CHANNEL_LAST_MSG = "lastMessage";
+    public static final String CHANNEL_WRITE_MSG = "writeMessage";
 }

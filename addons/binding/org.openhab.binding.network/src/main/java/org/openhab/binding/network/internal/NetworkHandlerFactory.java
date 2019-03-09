@@ -1,18 +1,21 @@
 /**
- * Copyright (c) 2010-2018 by the respective copyright holders.
+ * Copyright (c) 2010-2019 Contributors to the openHAB project
  *
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * See the NOTICE file(s) distributed with this work for additional
+ * information.
+ *
+ * This program and the accompanying materials are made available under the
+ * terms of the Eclipse Public License 2.0 which is available at
+ * http://www.eclipse.org/legal/epl-2.0
+ *
+ * SPDX-License-Identifier: EPL-2.0
  */
 package org.openhab.binding.network.internal;
 
-import static org.openhab.binding.network.internal.NetworkBindingConstants.*;
-
 import java.util.Map;
 
-import org.eclipse.jdt.annotation.NonNull;
+import org.eclipse.jdt.annotation.NonNullByDefault;
+import org.eclipse.jdt.annotation.Nullable;
 import org.eclipse.smarthome.config.core.Configuration;
 import org.eclipse.smarthome.core.thing.Thing;
 import org.eclipse.smarthome.core.thing.ThingTypeUID;
@@ -30,21 +33,21 @@ import org.osgi.service.component.annotations.Modified;
  * The handler factory retrieves the binding configuration and is responsible for creating
  * PING_DEVICE and SERVICE_DEVICE handlers.
  *
- * @author David Graeff
+ * @author David Graeff - Initial contribution
  */
+@NonNullByDefault
 @Component(service = ThingHandlerFactory.class, configurationPid = "binding.network")
 public class NetworkHandlerFactory extends BaseThingHandlerFactory {
-    @NonNull
     final NetworkBindingConfiguration configuration = new NetworkBindingConfiguration();
 
     @Override
     public boolean supportsThingType(ThingTypeUID thingTypeUID) {
-        return SUPPORTED_THING_TYPES_UIDS.contains(thingTypeUID);
+        return NetworkBindingConstants.SUPPORTED_THING_TYPES_UIDS.contains(thingTypeUID);
     }
 
     // The activate component call is used to access the bindings configuration
     @Activate
-    protected void activate(@NonNull ComponentContext componentContext, Map<String, Object> config) {
+    protected void activate(ComponentContext componentContext, Map<String, Object> config) {
         super.activate(componentContext);
         modified(config);
     };
@@ -64,12 +67,13 @@ public class NetworkHandlerFactory extends BaseThingHandlerFactory {
     }
 
     @Override
-    protected ThingHandler createHandler(Thing thing) {
+    protected @Nullable ThingHandler createHandler(Thing thing) {
         ThingTypeUID thingTypeUID = thing.getThingTypeUID();
 
-        if (thingTypeUID.equals(PING_DEVICE) || thingTypeUID.equals(BACKWARDS_COMPATIBLE_DEVICE)) {
+        if (thingTypeUID.equals(NetworkBindingConstants.PING_DEVICE)
+                || thingTypeUID.equals(NetworkBindingConstants.BACKWARDS_COMPATIBLE_DEVICE)) {
             return new NetworkHandler(thing, false, configuration);
-        } else if (thingTypeUID.equals(SERVICE_DEVICE)) {
+        } else if (thingTypeUID.equals(NetworkBindingConstants.SERVICE_DEVICE)) {
             return new NetworkHandler(thing, true, configuration);
         }
         return null;

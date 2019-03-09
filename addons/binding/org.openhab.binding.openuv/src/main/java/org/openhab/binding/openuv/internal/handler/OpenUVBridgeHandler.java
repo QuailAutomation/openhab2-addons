@@ -1,10 +1,14 @@
 /**
- * Copyright (c) 2010-2018 by the respective copyright holders.
+ * Copyright (c) 2010-2019 Contributors to the openHAB project
  *
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * See the NOTICE file(s) distributed with this work for additional
+ * information.
+ *
+ * This program and the accompanying materials are made available under the
+ * terms of the Eclipse Public License 2.0 which is available at
+ * http://www.eclipse.org/legal/epl-2.0
+ *
+ * SPDX-License-Identifier: EPL-2.0
  */
 package org.openhab.binding.openuv.internal.handler;
 
@@ -15,6 +19,7 @@ import java.time.ZonedDateTime;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.lang.StringUtils;
 import org.eclipse.jdt.annotation.NonNullByDefault;
@@ -50,6 +55,7 @@ import com.google.gson.JsonDeserializer;
 @NonNullByDefault
 public class OpenUVBridgeHandler extends BaseBridgeHandler {
     private final Logger logger = LoggerFactory.getLogger(OpenUVBridgeHandler.class);
+    private static final int REQUEST_TIMEOUT = (int) TimeUnit.SECONDS.toMillis(30);
 
     private final Gson gson = new GsonBuilder()
             .registerTypeAdapter(DecimalType.class,
@@ -83,7 +89,7 @@ public class OpenUVBridgeHandler extends BaseBridgeHandler {
             // Check if the provided api key is valid for use with the OpenUV service
             try {
                 // Run the HTTP request and get the JSON response
-                OpenUVJsonResponse response = getUVData("0", "0");
+                OpenUVJsonResponse response = getUVData("0", "0", null);
                 if ("Invalid API Key".equalsIgnoreCase(response.getError())) {
                     error = "API key has to be fixed";
                     errorDetail = response.getError();
@@ -127,18 +133,15 @@ public class OpenUVBridgeHandler extends BaseBridgeHandler {
         super.handleRemoval();
     }
 
-    public OpenUVJsonResponse getUVData(String latitude, String longitude) throws IOException {
-        return getUVData(latitude, longitude, "");
-    }
-
-    public OpenUVJsonResponse getUVData(String latitude, String longitude, String altitude) throws IOException {
+    public OpenUVJsonResponse getUVData(String latitude, String longitude, @Nullable String altitude)
+            throws IOException {
         StringBuilder urlBuilder = new StringBuilder(BASE_URL).append("?lat=").append(latitude).append("&lng=")
                 .append(longitude);
 
-        if (!"".equals(altitude)) {
+        if (altitude != null) {
             urlBuilder.append("&alt=").append(altitude);
         }
-        String jsonData = HttpUtil.executeUrl("GET", urlBuilder.toString(), header, null, null, 2000);
+        String jsonData = HttpUtil.executeUrl("GET", urlBuilder.toString(), header, null, null, REQUEST_TIMEOUT);
         logger.debug("URL = {}", jsonData);
 
         return gson.fromJson(jsonData, OpenUVJsonResponse.class);

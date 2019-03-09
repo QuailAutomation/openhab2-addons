@@ -1,10 +1,14 @@
 /**
- * Copyright (c) 2010-2018 by the respective copyright holders.
+ * Copyright (c) 2010-2019 Contributors to the openHAB project
  *
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * See the NOTICE file(s) distributed with this work for additional
+ * information.
+ *
+ * This program and the accompanying materials are made available under the
+ * terms of the Eclipse Public License 2.0 which is available at
+ * http://www.eclipse.org/legal/epl-2.0
+ *
+ * SPDX-License-Identifier: EPL-2.0
  */
 package org.openhab.binding.synopanalyzer.internal;
 
@@ -51,7 +55,7 @@ public class SynopAnalyzerBindingConstants {
     // Default units
     public static final Unit<Temperature> TEMPERATURE_UNIT = SIUnits.CELSIUS;
     public static final Unit<Pressure> PRESSURE_UNIT = HECTO(SIUnits.PASCAL);
-    public static final Unit<Speed> WIND_SPEED_UNIT_MS = SIUnits.METRE_PER_SECOND;
+    public static final Unit<Speed> WIND_SPEED_UNIT_MS = SmartHomeUnits.METRE_PER_SECOND;
     public static final Unit<Speed> WIND_SPEED_UNIT_KNOT = SmartHomeUnits.KNOT;
     public static final Unit<Angle> WIND_DIRECTION_UNIT = SmartHomeUnits.DEGREE_ANGLE;
     public static final String[] WIND_DIRECTIONS = new String[] { "N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE", "S",

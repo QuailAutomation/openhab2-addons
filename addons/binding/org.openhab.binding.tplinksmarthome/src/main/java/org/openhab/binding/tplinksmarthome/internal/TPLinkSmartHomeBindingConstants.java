@@ -1,10 +1,14 @@
 /**
- * Copyright (c) 2010-2018 by the respective copyright holders.
+ * Copyright (c) 2010-2019 Contributors to the openHAB project
  *
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * See the NOTICE file(s) distributed with this work for additional
+ * information.
+ *
+ * This program and the accompanying materials are made available under the
+ * terms of the Eclipse Public License 2.0 which is available at
+ * http://www.eclipse.org/legal/epl-2.0
+ *
+ * SPDX-License-Identifier: EPL-2.0
  */
 package org.openhab.binding.tplinksmarthome.internal;
 
@@ -58,6 +62,7 @@ public final class TPLinkSmartHomeBindingConstants {
 
     // List of configuration keys
     public static final String CONFIG_IP = "ipAddress";
+    public static final String CONFIG_DEVICE_ID = "deviceId";
     public static final String CONFIG_REFRESH = "refresh";
     // Only for bulbs
     public static final String CONFIG_TRANSITION_PERIOD = "transitionPeriod";
@@ -67,7 +72,6 @@ public final class TPLinkSmartHomeBindingConstants {
     public static final String PROPERTY_MODEL = "model";
     public static final String PROPERTY_DEVICE_NAME = "device name";
     public static final String PROPERTY_MAC = "mac";
-    public static final String PROPERTY_DEVICE_ID = "device id";
     public static final String PROPERTY_HARDWARE_VERSION = "hardware version";
     public static final String PROPERTY_SOFWARE_VERSION = "sofware version";
     public static final String PROPERTY_HARDWARE_ID = "hardware id";

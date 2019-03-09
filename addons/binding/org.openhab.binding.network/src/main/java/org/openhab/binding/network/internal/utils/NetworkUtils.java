@@ -1,10 +1,14 @@
 /**
- * Copyright (c) 2010-2018 by the respective copyright holders.
+ * Copyright (c) 2010-2019 Contributors to the openHAB project
  *
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * See the NOTICE file(s) distributed with this work for additional
+ * information.
+ *
+ * This program and the accompanying materials are made available under the
+ * terms of the Eclipse Public License 2.0 which is available at
+ * http://www.eclipse.org/legal/epl-2.0
+ *
+ * SPDX-License-Identifier: EPL-2.0
  */
 package org.openhab.binding.network.internal.utils;
 
@@ -14,9 +18,9 @@ import java.io.InputStreamReader;
 import java.net.ConnectException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
+import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.net.InterfaceAddress;
 import java.net.NetworkInterface;
 import java.net.NoRouteToHostException;
 import java.net.PortUnreachableException;
@@ -26,60 +30,39 @@ import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.util.Enumeration;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.SystemUtils;
 import org.apache.commons.net.util.SubnetUtils;
+import org.eclipse.jdt.annotation.NonNullByDefault;
+import org.eclipse.jdt.annotation.Nullable;
+import org.eclipse.smarthome.core.net.CidrAddress;
+import org.eclipse.smarthome.core.net.NetUtil;
 import org.eclipse.smarthome.io.net.exec.ExecUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Network utility functions for pinging and for determining all interfaces and assigned IP addresses.
  *
- * @author David Graeff <david.graeff@web.de>
+ * @author David Graeff - Initial contribution
  */
+@NonNullByDefault
 public class NetworkUtils {
+    private final Logger logger = LoggerFactory.getLogger(NetworkUtils.class);
+
     /**
      * Gets every IPv4 Address on each Interface except the loopback
      * The Address format is ip/subnet
      *
      * @return The collected IPv4 Addresses
      */
-    public Set<String> getInterfaceIPs() {
-        Set<String> interfaceIPs = new HashSet<>();
-
-        Enumeration<NetworkInterface> interfaces;
-        try {
-            interfaces = NetworkInterface.getNetworkInterfaces();
-        } catch (SocketException ignored) {
-            // If we are not allowed to enumerate, we return an empty result set.
-            return interfaceIPs;
-        }
-
-        // For each interface ...
-        for (Enumeration<NetworkInterface> en = interfaces; en.hasMoreElements();) {
-            NetworkInterface networkInterface = en.nextElement();
-            boolean isLoopback = true;
-            try {
-                isLoopback = networkInterface.isLoopback();
-            } catch (SocketException ignored) {
-            }
-            if (!isLoopback) {
-                // .. and for each address ...
-                for (Iterator<InterfaceAddress> it = networkInterface.getInterfaceAddresses().iterator(); it
-                        .hasNext();) {
-
-                    // ... get IP and Subnet
-                    InterfaceAddress interfaceAddress = it.next();
-                    interfaceIPs.add(interfaceAddress.getAddress().getHostAddress() + "/"
-                            + interfaceAddress.getNetworkPrefixLength());
-                }
-            }
-        }
-
-        return interfaceIPs;
+    public Set<CidrAddress> getInterfaceIPs() {
+        return NetUtil.getAllInterfaceAddresses().stream().filter(a -> a.getAddress() instanceof Inet4Address)
+                .collect(Collectors.toSet());
     }
 
     /**
@@ -122,23 +105,38 @@ public class NetworkUtils {
      * @param maximumPerInterface The maximum of IP addresses per interface or 0 to get all.
      * @return Every single IP which can be assigned on the Networks the computer is connected to
      */
-    public Set<String> getNetworkIPs(Set<String> interfaceIPs, int maximumPerInterface) {
+    public Set<String> getNetworkIPs(Set<CidrAddress> interfaceIPs, int maximumPerInterface) {
         LinkedHashSet<String> networkIPs = new LinkedHashSet<>();
 
-        for (String string : interfaceIPs) {
-            try {
-                // gets every ip which can be assigned on the given network
-                SubnetUtils utils = new SubnetUtils(string);
-                String[] addresses = utils.getInfo().getAllAddresses();
-                int len = addresses.length;
-                if (maximumPerInterface != 0 && maximumPerInterface < len) {
-                    len = maximumPerInterface;
-                }
-                for (int i = 0; i < len; i++) {
-                    networkIPs.add(addresses[i]);
-                }
+        short minCidrPrefixLength = 8; // historic Class A network, addresses = 16777214
+        if (maximumPerInterface != 0) {
+            // calculate minimum CIDR prefix length from maximumPerInterface
+            // (equals leading unset bits (Integer has 32 bits)
+            minCidrPrefixLength = (short) Integer.numberOfLeadingZeros(maximumPerInterface);
+            if (Integer.bitCount(maximumPerInterface) == 1) {
+                // if only the highest is set, decrease prefix by 1 to cover all addresses
+                minCidrPrefixLength--;
+            }
+        }
+        logger.trace("set minCidrPrefixLength to {}, maximumPerInterface is {}", minCidrPrefixLength,
+                maximumPerInterface);
 
-            } catch (Exception ex) {
+        for (CidrAddress cidrNotation : interfaceIPs) {
+            if (cidrNotation.getPrefix() < minCidrPrefixLength) {
+                logger.info(
+                        "CIDR prefix is smaller than /{} on interface with address {}, truncating to /{}, some addresses might be lost",
+                        minCidrPrefixLength, cidrNotation, minCidrPrefixLength);
+                cidrNotation = new CidrAddress(cidrNotation.getAddress(), minCidrPrefixLength);
+            }
+
+            SubnetUtils utils = new SubnetUtils(cidrNotation.toString());
+            String[] addresses = utils.getInfo().getAllAddresses();
+            int len = addresses.length;
+            if (maximumPerInterface != 0 && maximumPerInterface < len) {
+                len = maximumPerInterface;
+            }
+            for (int i = 0; i < len; i++) {
+                networkIPs.add(addresses[i]);
             }
         }
 
@@ -198,17 +196,19 @@ public class NetworkUtils {
      * Return true if the external arp ping utility (arping) is available and executable on the given path.
      */
     public ArpPingUtilEnum determineNativeARPpingMethod(String arpToolPath) {
-        String result = ExecUtil.executeCommandLineAndWaitResponse(arpToolPath, 100);
+        String result = ExecUtil.executeCommandLineAndWaitResponse(arpToolPath + " --help", 100);
         if (StringUtils.isBlank(result)) {
-            return null;
+            return ArpPingUtilEnum.UNKNOWN_TOOL;
         } else if (result.contains("Thomas Habets")) {
-            if (result.contains("-w sec Specify a timeout")) {
+            if (result.matches("(?s)(.*)w sec Specify a timeout(.*)")) {
                 return ArpPingUtilEnum.THOMAS_HABERT_ARPING;
             } else {
                 return ArpPingUtilEnum.THOMAS_HABERT_ARPING_WITHOUT_TIMEOUT;
             }
         } else if (result.contains("-w timeout")) {
             return ArpPingUtilEnum.IPUTILS_ARPING;
+        } else if (result.contains("Usage: arp-ping.exe")) {
+            return ArpPingUtilEnum.ELI_FULKERSON_ARP_PING_FOR_WINDOWS;
         }
         return ArpPingUtilEnum.UNKNOWN_TOOL;
     }
@@ -228,7 +228,7 @@ public class NetworkUtils {
      * @return Returns true if the device responded
      * @throws IOException The ping command could probably not be found
      */
-    public boolean nativePing(IpPingMethodEnum method, String hostname, int timeoutInMS)
+    public boolean nativePing(@Nullable IpPingMethodEnum method, String hostname, int timeoutInMS)
             throws IOException, InterruptedException {
         Process proc;
         // Yes, all supported operating systems have their own ping utility with a different command line
@@ -248,7 +248,6 @@ public class NetworkUtils {
             default:
                 // We cannot estimate the command line for any other operating system and just return false
                 return false;
-
         }
 
         // The return code is 0 for a successful ping, 1 if device didn't
@@ -286,7 +285,8 @@ public class NetworkUtils {
         UNKNOWN_TOOL,
         IPUTILS_ARPING,
         THOMAS_HABERT_ARPING,
-        THOMAS_HABERT_ARPING_WITHOUT_TIMEOUT
+        THOMAS_HABERT_ARPING_WITHOUT_TIMEOUT,
+        ELI_FULKERSON_ARP_PING_FOR_WINDOWS
     }
 
     /**
@@ -296,15 +296,15 @@ public class NetworkUtils {
      * * https://github.com/ThomasHabets/arping which also works on Windows and MacOS.
      *
      * @param arpUtilPath The arping absolute path including filename. Example: "arping" or "/usr/bin/arping" or
-     *            "C:\something\arping.exe"
+     *            "C:\something\arping.exe" or "arp-ping.exe"
      * @param interfaceName An interface name, on linux for example "wlp58s0", shown by ifconfig. Must not be null.
      * @param ipV4address The ipV4 address. Must not be null.
      * @param timeoutInMS A timeout in milliseconds
      * @return Return true if the device responded
      * @throws IOException The ping command could probably not be found
      */
-    public boolean nativeARPPing(ArpPingUtilEnum arpingTool, String arpUtilPath, String interfaceName,
-            String ipV4address, int timeoutInMS) throws IOException, InterruptedException {
+    public boolean nativeARPPing(@Nullable ArpPingUtilEnum arpingTool, @Nullable String arpUtilPath,
+            String interfaceName, String ipV4address, int timeoutInMS) throws IOException, InterruptedException {
         if (arpUtilPath == null || arpingTool == null || arpingTool == ArpPingUtilEnum.UNKNOWN_TOOL) {
             return false;
         }
@@ -312,10 +312,13 @@ public class NetworkUtils {
         if (arpingTool == ArpPingUtilEnum.THOMAS_HABERT_ARPING_WITHOUT_TIMEOUT) {
             proc = new ProcessBuilder(arpUtilPath, "-c", "1", "-i", interfaceName, ipV4address).start();
         } else if (arpingTool == ArpPingUtilEnum.THOMAS_HABERT_ARPING) {
-            proc = new ProcessBuilder(arpUtilPath, "-w", String.valueOf(timeoutInMS / 1000), "-c", "1", "-i",
+            proc = new ProcessBuilder(arpUtilPath, "-w", String.valueOf(timeoutInMS / 1000), "-C", "1", "-i",
                     interfaceName, ipV4address).start();
+        } else if (arpingTool == ArpPingUtilEnum.ELI_FULKERSON_ARP_PING_FOR_WINDOWS) {
+            proc = new ProcessBuilder(arpUtilPath, "-w", String.valueOf(timeoutInMS), 
+                                      "-x", ipV4address).start();
         } else {
-            proc = new ProcessBuilder(arpUtilPath, "-w", String.valueOf(timeoutInMS / 1000), "-c", "1", "-I",
+            proc = new ProcessBuilder(arpUtilPath, "-w", String.valueOf(timeoutInMS / 1000), "-C", "1", "-I",
                     interfaceName, ipV4address).start();
         }
 

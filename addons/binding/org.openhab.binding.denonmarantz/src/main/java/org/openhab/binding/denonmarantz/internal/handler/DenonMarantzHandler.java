@@ -1,10 +1,14 @@
 /**
- * Copyright (c) 2010-2018 by the respective copyright holders.
+ * Copyright (c) 2010-2019 Contributors to the openHAB project
  *
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * See the NOTICE file(s) distributed with this work for additional
+ * information.
+ *
+ * This program and the accompanying materials are made available under the
+ * terms of the Eclipse Public License 2.0 which is available at
+ * http://www.eclipse.org/legal/epl-2.0
+ *
+ * SPDX-License-Identifier: EPL-2.0
  */
 package org.openhab.binding.denonmarantz.internal.handler;
 
@@ -19,6 +23,7 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
@@ -67,11 +72,13 @@ import org.xml.sax.SAXException;
 public class DenonMarantzHandler extends BaseThingHandler implements DenonMarantzStateChangedListener {
 
     private final Logger logger = LoggerFactory.getLogger(DenonMarantzHandler.class);
+    private static final int RETRY_TIME_SECONDS = 30;
     private HttpClient httpClient;
     private DenonMarantzConnector connector;
     private DenonMarantzConfiguration config;
     private DenonMarantzConnectorFactory connectorFactory = new DenonMarantzConnectorFactory();
     private DenonMarantzState denonMarantzState;
+    private ScheduledFuture<?> retryJob;
 
     public DenonMarantzHandler(Thing thing, HttpClient httpClient) {
         super(thing);
@@ -268,6 +275,7 @@ public class DenonMarantzHandler extends BaseThingHandler implements DenonMarant
 
     @Override
     public void initialize() {
+        cancelRetry();
         config = getConfigAs(DenonMarantzConfiguration.class);
 
         // Configure Connection type (Telnet/HTTP) and number of zones
@@ -287,8 +295,18 @@ public class DenonMarantzHandler extends BaseThingHandler implements DenonMarant
     }
 
     private void createConnection() {
+        if (connector != null) {
+            connector.dispose();
+        }
         connector = connectorFactory.getConnector(config, denonMarantzState, scheduler, httpClient);
         connector.connect();
+    }
+
+    private void cancelRetry() {
+        ScheduledFuture<?> localRetryJob = retryJob;
+        if (localRetryJob != null && !localRetryJob.isDone()) {
+            localRetryJob.cancel(false);
+        }
     }
 
     private void configureZoneChannels() {
@@ -363,6 +381,7 @@ public class DenonMarantzHandler extends BaseThingHandler implements DenonMarant
             connector.dispose();
             connector = null;
         }
+        cancelRetry();
         super.dispose();
     }
 
@@ -395,5 +414,7 @@ public class DenonMarantzHandler extends BaseThingHandler implements DenonMarant
             // Don't flood the log with thing 'updated: OFFLINE' when already offline
             updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.COMMUNICATION_ERROR, errorMessage);
         }
+        connector.dispose();
+        retryJob = scheduler.schedule(this::createConnection, RETRY_TIME_SECONDS, TimeUnit.SECONDS);
     }
 }

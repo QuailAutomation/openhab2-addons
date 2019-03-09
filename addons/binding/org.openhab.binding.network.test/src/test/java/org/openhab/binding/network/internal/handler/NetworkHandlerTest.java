@@ -1,16 +1,21 @@
 /**
- * Copyright (c) 2010-2018 by the respective copyright holders.
+ * Copyright (c) 2010-2019 Contributors to the openHAB project
  *
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * See the NOTICE file(s) distributed with this work for additional
+ * information.
+ *
+ * This program and the accompanying materials are made available under the
+ * terms of the Eclipse Public License 2.0 which is available at
+ * http://www.eclipse.org/legal/epl-2.0
+ *
+ * SPDX-License-Identifier: EPL-2.0
  */
 package org.openhab.binding.network.internal.handler;
 
 import static org.hamcrest.CoreMatchers.*;
-import static org.junit.Assert.assertThat;
-import static org.mockito.Matchers.*;
+import static org.junit.Assert.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 import static org.mockito.MockitoAnnotations.initMocks;
 
@@ -24,6 +29,7 @@ import org.eclipse.smarthome.core.thing.ThingStatusDetail;
 import org.eclipse.smarthome.core.thing.ThingStatusInfo;
 import org.eclipse.smarthome.core.thing.ThingUID;
 import org.eclipse.smarthome.core.thing.binding.ThingHandlerCallback;
+import org.eclipse.smarthome.test.java.JavaTest;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -33,14 +39,13 @@ import org.openhab.binding.network.internal.NetworkBindingConfiguration;
 import org.openhab.binding.network.internal.NetworkBindingConstants;
 import org.openhab.binding.network.internal.PresenceDetection;
 import org.openhab.binding.network.internal.PresenceDetectionValue;
-import org.openhab.binding.network.internal.handler.NetworkHandler;
 
 /**
  * Tests cases for {@link NetworkHandler}.
  *
  * @author David Graeff - Initial contribution
  */
-public class NetworkHandlerTest {
+public class NetworkHandlerTest extends JavaTest {
     private ThingUID thingUID = new ThingUID("network", "ttype", "ping");
     @Mock
     private ThingHandlerCallback callback;
@@ -71,7 +76,7 @@ public class NetworkHandlerTest {
         });
         PresenceDetection presenceDetection = spy(new PresenceDetection(handler, 2000));
         // Mock start/stop automatic refresh
-        doNothing().when(presenceDetection).startAutomaticRefresh(anyObject());
+        doNothing().when(presenceDetection).startAutomaticRefresh(any());
         doNothing().when(presenceDetection).stopAutomaticRefresh();
 
         handler.initialize(presenceDetection);
@@ -116,14 +121,14 @@ public class NetworkHandlerTest {
         });
         PresenceDetection presenceDetection = spy(new PresenceDetection(handler, 2000));
         // Mock start/stop automatic refresh
-        doNothing().when(presenceDetection).startAutomaticRefresh(anyObject());
+        doNothing().when(presenceDetection).startAutomaticRefresh(any());
         doNothing().when(presenceDetection).stopAutomaticRefresh();
 
         handler.initialize(presenceDetection);
         // Check that we are online
         ArgumentCaptor<ThingStatusInfo> statusInfoCaptor = ArgumentCaptor.forClass(ThingStatusInfo.class);
         verify(callback).statusUpdated(eq(thing), statusInfoCaptor.capture());
-        Assert.assertThat(statusInfoCaptor.getValue().getStatus(), is(equalTo(ThingStatus.ONLINE)));
+        assertEquals(ThingStatus.ONLINE, statusInfoCaptor.getValue().getStatus());
 
         // Mock result value
         PresenceDetectionValue value = mock(PresenceDetectionValue.class);
@@ -131,7 +136,7 @@ public class NetworkHandlerTest {
         when(value.isReachable()).thenReturn(true);
         when(value.getSuccessfulDetectionTypes()).thenReturn("TESTMETHOD");
 
-        // Partitial result from the PresenceDetection object should affect the
+        // Partial result from the PresenceDetection object should affect the
         // ONLINE and LATENCY channel
         handler.partialDetectionResult(value);
         verify(callback).stateUpdated(eq(new ChannelUID(thingUID, NetworkBindingConstants.CHANNEL_ONLINE)),
@@ -142,7 +147,6 @@ public class NetworkHandlerTest {
         // Final result affects the LASTSEEN channel
         when(value.isFinished()).thenReturn(true);
         handler.finalDetectionResult(value);
-        verify(callback).stateUpdated(eq(new ChannelUID(thingUID, NetworkBindingConstants.CHANNEL_LASTSEEN)),
-                anyObject());
+        verify(callback).stateUpdated(eq(new ChannelUID(thingUID, NetworkBindingConstants.CHANNEL_LASTSEEN)), any());
     }
 }

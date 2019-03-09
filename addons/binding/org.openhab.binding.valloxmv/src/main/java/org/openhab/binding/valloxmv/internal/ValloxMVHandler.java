@@ -1,10 +1,14 @@
 /**
- * Copyright (c) 2010-2018 by the respective copyright holders.
+ * Copyright (c) 2010-2019 Contributors to the openHAB project
  *
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * See the NOTICE file(s) distributed with this work for additional
+ * information.
+ *
+ * This program and the accompanying materials are made available under the
+ * terms of the Eclipse Public License 2.0 which is available at
+ * http://www.eclipse.org/legal/epl-2.0
+ *
+ * SPDX-License-Identifier: EPL-2.0
  */
 package org.openhab.binding.valloxmv.internal;
 
@@ -15,7 +19,9 @@ import java.util.concurrent.TimeUnit;
 import javax.measure.quantity.Dimensionless;
 import javax.measure.quantity.Temperature;
 
-import org.eclipse.jdt.annotation.NonNull;
+import org.eclipse.jdt.annotation.NonNullByDefault;
+import org.eclipse.jdt.annotation.Nullable;
+import org.eclipse.jetty.websocket.client.WebSocketClient;
 import org.eclipse.smarthome.core.library.types.OnOffType;
 import org.eclipse.smarthome.core.library.types.QuantityType;
 import org.eclipse.smarthome.core.library.unit.SmartHomeUnits;
@@ -36,11 +42,13 @@ import org.slf4j.LoggerFactory;
  *
  * @author Björn Brings - Initial contribution
  */
+@NonNullByDefault
 public class ValloxMVHandler extends BaseThingHandler {
 
     private final Logger logger = LoggerFactory.getLogger(ValloxMVHandler.class);
-    private ScheduledFuture<?> updateTasks;
-    private ValloxMVWebSocket valloxSendSocket;
+    private @Nullable ScheduledFuture<?> updateTasks;
+    private @Nullable ValloxMVWebSocket valloxSendSocket;
+    private WebSocketClient webSocketClient;
 
     /**
      * Refresh interval in seconds.
@@ -51,13 +59,17 @@ public class ValloxMVHandler extends BaseThingHandler {
     /**
      * IP of vallox ventilation unit web interface.
      */
-    public ValloxMVHandler(@NonNull Thing thing) {
+    public ValloxMVHandler(Thing thing, WebSocketClient webSocketClient) {
         super(thing);
+        this.webSocketClient = webSocketClient;
     }
 
+    @SuppressWarnings({ "null", "unchecked" })
     @Override
-    @SuppressWarnings("unchecked")
     public void handleCommand(ChannelUID channelUID, Command command) {
+        if (valloxSendSocket == null) {
+            return;
+        }
         if (command instanceof RefreshType) {
             if (lastUpdate > System.currentTimeMillis() + updateInterval * 1000) {
                 valloxSendSocket.request(null, null);
@@ -87,25 +99,13 @@ public class ValloxMVHandler extends BaseThingHandler {
                     valloxSendSocket.request(channelUID, "5");
                     valloxSendSocket.request(null, null);
                 }
-            } else if (ValloxMVBindingConstants.CHANNEL_EXTR_FAN_BALANCE_BASE.equals(channelUID.getId())) {
+            } else if (ValloxMVBindingConstants.WRITABLE_CHANNELS_DIMENSIONLESS.contains(channelUID.getId())) {
                 if (command instanceof QuantityType) {
                     QuantityType<Dimensionless> quantity = (QuantityType<Dimensionless>) command;
                     valloxSendSocket.request(channelUID, Integer.toString(quantity.intValue()));
                     valloxSendSocket.request(null, null);
                 }
-            } else if (ValloxMVBindingConstants.CHANNEL_SUPP_FAN_BALANCE_BASE.equals(channelUID.getId())) {
-                if (command instanceof QuantityType) {
-                    QuantityType<Dimensionless> quantity = (QuantityType<Dimensionless>) command;
-                    valloxSendSocket.request(channelUID, Integer.toString(quantity.intValue()));
-                    valloxSendSocket.request(null, null);
-                }
-            } else if (ValloxMVBindingConstants.CHANNEL_HOME_SPEED_SETTING.equals(channelUID.getId())) {
-                if (command instanceof QuantityType) {
-                    QuantityType<Dimensionless> quantity = (QuantityType<Dimensionless>) command;
-                    valloxSendSocket.request(channelUID, Integer.toString(quantity.intValue()));
-                    valloxSendSocket.request(null, null);
-                }
-            } else if (ValloxMVBindingConstants.CHANNEL_HOME_AIR_TEMP_TARGET.equals(channelUID.getId())) {
+            } else if (ValloxMVBindingConstants.WRITABLE_CHANNELS_TEMPERATURE.contains(channelUID.getId())) {
                 if (command instanceof QuantityType) {
                     // Convert temperature to millidegree Kelvin
                     QuantityType<Temperature> quantity = ((QuantityType<Temperature>) command)
@@ -127,7 +127,7 @@ public class ValloxMVHandler extends BaseThingHandler {
         updateStatus(ThingStatus.UNKNOWN);
 
         String ip = getConfigAs(ValloxMVConfig.class).getIp();
-        valloxSendSocket = new ValloxMVWebSocket(ValloxMVHandler.this, ip);
+        valloxSendSocket = new ValloxMVWebSocket(webSocketClient, ValloxMVHandler.this, ip);
 
         updateInterval = getConfigAs(ValloxMVConfig.class).getUpdateinterval();
         if (updateInterval < 15) {
@@ -143,7 +143,7 @@ public class ValloxMVHandler extends BaseThingHandler {
         String ip = getConfigAs(ValloxMVConfig.class).getIp();
         logger.debug("Connecting to ip: {}", ip);
         // Open WebSocket
-        ValloxMVWebSocket valloxSocket = new ValloxMVWebSocket(ValloxMVHandler.this, ip);
+        ValloxMVWebSocket valloxSocket = new ValloxMVWebSocket(webSocketClient, ValloxMVHandler.this, ip);
 
         updateTasks = scheduler.scheduleWithFixedDelay(() -> {
             // Do a pure read request to websocket interface
@@ -157,7 +157,9 @@ public class ValloxMVHandler extends BaseThingHandler {
 
     @Override
     public void dispose() {
-        updateTasks.cancel(true);
+        if (updateTasks != null) {
+            updateTasks.cancel(true);
+        }
         updateTasks = null;
     }
 

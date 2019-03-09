@@ -1,10 +1,14 @@
 /**
- * Copyright (c) 2010-2018 by the respective copyright holders.
+ * Copyright (c) 2010-2019 Contributors to the openHAB project
  *
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * See the NOTICE file(s) distributed with this work for additional
+ * information.
+ *
+ * This program and the accompanying materials are made available under the
+ * terms of the Eclipse Public License 2.0 which is available at
+ * http://www.eclipse.org/legal/epl-2.0
+ *
+ * SPDX-License-Identifier: EPL-2.0
  */
 package org.openhab.binding.keba.internal;
 
@@ -95,39 +99,5 @@ public class KebaBindingConstants {
 
             throw new IllegalArgumentException("Not a valid series");
         }
-    };
-
-    public enum KebaFirmware {
-        V201M21("2.01m21"),
-        V22A1("2.2a1"),
-        V23A2("2.3a2"),
-        V23A3("2.3a3"),
-        V25A3("2.5a3"),
-        V3042A1("3.04.2a1"),
-        V3062A5("3.06.2a5"),
-        V3071A1("3.07.1a1"),
-        V3084("3.08.4");
-
-        private final String id;
-
-        private KebaFirmware(final String id) {
-            this.id = id;
-        }
-
-        @Override
-        public String toString() {
-            return id;
-        }
-
-        public static KebaFirmware getFirmware(String text) throws IllegalArgumentException {
-            for (KebaFirmware c : KebaFirmware.values()) {
-                if (text.contains(c.id)) {
-                    return c;
-                }
-            }
-
-            throw new IllegalArgumentException("Not a valid firmware");
-        }
-
     };
 }

@@ -1,10 +1,14 @@
 /**
- * Copyright (c) 2010-2018 by the respective copyright holders.
+ * Copyright (c) 2010-2019 Contributors to the openHAB project
  *
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * See the NOTICE file(s) distributed with this work for additional
+ * information.
+ *
+ * This program and the accompanying materials are made available under the
+ * terms of the Eclipse Public License 2.0 which is available at
+ * http://www.eclipse.org/legal/epl-2.0
+ *
+ * SPDX-License-Identifier: EPL-2.0
  */
 package org.openhab.binding.internal.kostal.inverter;
 
@@ -52,6 +56,16 @@ public class WebscrapeHandler extends BaseThingHandler {
         channelConfigs.add(new ChannelConfig("totalEnergy", "td", 7, SmartHomeUnits.KILOWATT_HOUR));
         channelConfigs.add(new ChannelConfig("dayEnergy", "td", 10, SmartHomeUnits.KILOWATT_HOUR));
         channelConfigs.add(new ChannelConfig("status", "td", 13, null));
+        channelConfigs.add(new ChannelConfig("str1Voltage", "td", 19, SmartHomeUnits.VOLT));
+        channelConfigs.add(new ChannelConfig("str1Current", "td", 25, SmartHomeUnits.AMPERE));
+        channelConfigs.add(new ChannelConfig("str2Voltage", "td", 33, SmartHomeUnits.VOLT));
+        channelConfigs.add(new ChannelConfig("str2Current", "td", 39, SmartHomeUnits.AMPERE));
+        channelConfigs.add(new ChannelConfig("l1Voltage", "td", 22, SmartHomeUnits.VOLT));
+        channelConfigs.add(new ChannelConfig("l1Power", "td", 28, SmartHomeUnits.WATT));
+        channelConfigs.add(new ChannelConfig("l2Voltage", "td", 36, SmartHomeUnits.VOLT));
+        channelConfigs.add(new ChannelConfig("l2Power", "td", 42, SmartHomeUnits.WATT));
+        channelConfigs.add(new ChannelConfig("l3Voltage", "td", 46, SmartHomeUnits.VOLT));
+        channelConfigs.add(new ChannelConfig("l3Power", "td", 49, SmartHomeUnits.WATT));
     }
 
     @Override

@@ -1,15 +1,20 @@
 /**
- * Copyright (c) 2010-2018 by the respective copyright holders.
+ * Copyright (c) 2010-2019 Contributors to the openHAB project
  *
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * See the NOTICE file(s) distributed with this work for additional
+ * information.
+ *
+ * This program and the accompanying materials are made available under the
+ * terms of the Eclipse Public License 2.0 which is available at
+ * http://www.eclipse.org/legal/epl-2.0
+ *
+ * SPDX-License-Identifier: EPL-2.0
  */
 package org.openhab.binding.solaredge.internal;
 
 import java.util.Collections;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.eclipse.smarthome.core.thing.ThingTypeUID;
@@ -64,6 +69,13 @@ public class SolarEdgeBindingConstants {
     // constants
     public static final String BEGIN_OF_DAY_TIME = "00:00:00";
     public static final String END_OF_DAY_TIME = "23:59:59";
+    public static final long MINUTES_PER_DAY = 1440;
+
+    // web request constants
+    public static final long WEB_REQUEST_PUBLIC_API_DAY_LIMIT = 300;
+    public static final long WEB_REQUEST_INITIAL_DELAY = TimeUnit.SECONDS.toMillis(30);
+    public static final long WEB_REQUEST_INTERVAL = TimeUnit.SECONDS.toMillis(5);
+    public static final int WEB_REQUEST_QUEUE_MAX_SIZE = 20;
 
     public static final Set<ThingTypeUID> SUPPORTED_THING_TYPES_UIDS = Collections.singleton(THING_TYPE_GENERIC);
 
