@@ -55,6 +55,7 @@
     <module>org.openhab.binding.hyperion</module>
     <module>org.openhab.binding.globalcache</module>
     <module>org.openhab.binding.icloud</module>
+    <module>org.openhab.binding.isy</module>
     <module>org.openhab.binding.innogysmarthome</module>
     <module>org.openhab.binding.ipp</module>
     <module>org.openhab.binding.irtrans</module>

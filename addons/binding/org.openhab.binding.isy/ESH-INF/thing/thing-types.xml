@@ -1,0 +1,1077 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<thing:thing-descriptions bindingId="isy" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:thing="http://eclipse.org/smarthome/schemas/thing-description/v1.0.0"
+	xsi:schemaLocation="http://eclipse.org/smarthome/schemas/thing-description/v1.0.0 http://eclipse.org/smarthome/schemas/thing-description-1.0.0.xsd">
+	<bridge-type id="isyBridge">
+		<label>Isy IP Access Point</label>
+		<description>Ethernet access point to Isy control system</description>
+		<channels>
+		  <channel id="last_status_update" typeId="last_update_date" />
+		  <channel id="initiate_reconnect" typeId="initiate_reconnect" />
+		</channels>
+		<config-description>
+			<parameter name="user" type="text" required="true">
+				<label>User Name</label>
+				<description>The user name to log in to the Isy</description>
+			</parameter>
+			<parameter name="password" type="text" required="true">
+				<context>password</context>
+				<label>Password</label>
+				<description>The user password to log in to the Isy</description>
+			</parameter>
+			<parameter name="ipAddress" type="text" required="false">
+				<context>network-address</context>
+				<label>IP or Host Name</label>
+				<description>The IP or host name of the Isy Device</description>
+			</parameter>
+		</config-description>
+	</bridge-type>
+	<thing-type id="program">
+		<supported-bridge-type-refs>
+			<bridge-type-ref id="isyBridge" />
+		</supported-bridge-type-refs>
+		<label>Program</label>
+		<description>Program</description>
+		<channels>
+			<channel id="control" typeId="program_control" />
+			<channel id="run" typeId="runIf_switch" />
+			<!-- <channel id="runElse" typeId="runElse_switch" /> <channel id="stop" typeId="stop_switch" /> -->
+		</channels>
+		<config-description>
+			<parameter name="id" type="text" required="true">
+				<label>Program Id</label>
+				<description>Program's Id.</description>
+			</parameter>
+			<parameter name="name" type="text" required="true">
+				<label>Name</label>
+				<description>Text description of program.</description>
+			</parameter>
+		</config-description>
+	</thing-type>
+	<thing-type id="scene">
+		<supported-bridge-type-refs>
+			<bridge-type-ref id="isyBridge" />
+		</supported-bridge-type-refs>
+		<label>Scene</label>
+		<description>Scene</description>
+		<channels>
+			<channel id="onoff" typeId="switchState" />
+		</channels>
+		<config-description>
+			<parameter name="address" type="text" required="true">
+				<label>Scene Address</label>
+				<description>Scene Address.</description>
+			</parameter>
+			<parameter name="name" type="text" required="true">
+				<label>Name</label>
+				<description>Text description of scene.</description>
+			</parameter>
+		</config-description>
+	</thing-type>
+	<thing-type id="variable">
+		<supported-bridge-type-refs>
+			<bridge-type-ref id="isyBridge" />
+		</supported-bridge-type-refs>
+		<label>Variable</label>
+		<description>Isy Variable</description>
+		<channels>
+			<channel id="value" typeId="variable_value" />
+		</channels>
+		<config-description>
+			<parameter name="id" type="integer" required="true">
+				<label>Variable Id</label>
+				<description>Variable's Id.</description>
+			</parameter>
+			<parameter name="type" type="integer" required="true">
+				<label>Type (Integer(1) or State(2))</label>
+				<description>Variable's Type.</description>
+			</parameter>
+		</config-description>
+	</thing-type>
+	<thing-type id="motion">
+		<supported-bridge-type-refs>
+			<bridge-type-ref id="isyBridge" />
+		</supported-bridge-type-refs>
+		<label>Motion Sensor</label>
+		<description>Motion Sensor</description>
+
+		<channels>
+			<channel id="motion" typeId="motion_sensor" />
+			<channel id="control" typeId="paddleAction" />
+			<channel id="dusk_dawn" typeId="dusk_sensor" />
+			<channel id="low_battery" typeId="low_battery_sensor" />
+		</channels>
+		<config-description>
+			<parameter name="address" type="text" required="true">
+				<label>Insteon Address</label>
+				<description>Address of motion detector.</description>
+			</parameter>
+			<parameter name="name" type="text" required="true">
+				<label>Name</label>
+				<description>Text description of device.</description>
+			</parameter>
+			<parameter name="deviceid" type="text" readOnly="true">
+				<label>Device Id</label>
+				<description>Insteon device ID.</description>
+			</parameter>
+		</config-description>
+	</thing-type>
+
+
+	<thing-type id="dimmer">
+		<supported-bridge-type-refs>
+			<bridge-type-ref id="isyBridge" />
+		</supported-bridge-type-refs>
+
+		<label>Light Dimmer</label>
+		<description>Controls dimmable loads</description>
+
+		<channels>
+			<channel id="loadlevel" typeId="loadLevel" />
+			<channel id="paddleaction" typeId="paddleAction" />
+		</channels>
+
+		<config-description>
+			<parameter name="address" type="text" required="true">
+				<label>Insteon Address</label>
+				<description>Insteon Address of device.</description>
+			</parameter>
+			<parameter name="name" type="text" required="true">
+				<label>Name</label>
+				<description>Text description of device.</description>
+			</parameter>
+			<parameter name="deviceid" type="text" readOnly="true">
+				<label>Device Id</label>
+				<description>Insteon device ID.</description>
+			</parameter>
+		</config-description>
+	</thing-type>
+	<thing-type id="togglelinc">
+		<supported-bridge-type-refs>
+			<bridge-type-ref id="isyBridge" />
+		</supported-bridge-type-refs>
+		<label>Togglelinc</label>
+		<description>Controls loads with On/Off switch</description>
+		<channels>
+			<channel id="state" typeId="switchState" />
+			<channel id="paddleaction" typeId="paddleAction" />
+		</channels>
+		<config-description>
+			<parameter name="address" type="text" required="true">
+				<label>Insteon Address</label>
+				<description>Insteon Address of device.</description>
+			</parameter>
+			<parameter name="name" type="text" required="true">
+				<label>Name</label>
+				<description>Text description of device.</description>
+			</parameter>
+			<parameter name="deviceid" type="text" readOnly="true">
+				<label>Device Id</label>
+				<description>Insteon device ID.</description>
+			</parameter>
+		</config-description>
+	</thing-type>
+	<thing-type id="triggerlinc">
+		<supported-bridge-type-refs>
+			<bridge-type-ref id="isyBridge" />
+		</supported-bridge-type-refs>
+
+		<label>Triggerlinc</label>
+		<description>Triggerlinc</description>
+
+		<channels>
+			<channel id="control" typeId="paddleAction" />
+			<channel id="open_sensor" typeId="open_sensor" />
+			<!-- <channel id="closed_sensor" typeId="closed_sensor" /> -->
+			<channel id="heartbeat" typeId="heartbeat" />
+		</channels>
+
+		<config-description>
+			<parameter name="address" type="text" required="true">
+				<label>Insteon Address</label>
+				<description>Insteon Address of device.</description>
+			</parameter>
+			<parameter name="name" type="text" required="true">
+				<label>Name</label>
+				<description>Text description of device.</description>
+			</parameter>
+			<parameter name="deviceid" type="text" readOnly="true">
+				<label>Device Id</label>
+				<description>Insteon device ID.</description>
+			</parameter>
+		</config-description>
+	</thing-type>
+	<thing-type id="hiddendoorsensor">
+		<supported-bridge-type-refs>
+			<bridge-type-ref id="isyBridge" />
+		</supported-bridge-type-refs>
+
+		<label>Hidden Door Sensor</label>
+		<description>Hidden Door Sensor</description>
+
+		<channels>
+			<channel id="open_sensor" typeId="open_sensor" />
+			<channel id="control" typeId="paddleAction" />
+			<channel id="low_battery" typeId="low_battery_sensor" />
+			<channel id="heartbeat" typeId="heartbeat" />
+		</channels>
+
+		<config-description>
+			<parameter name="address" type="text" required="true">
+				<label>Insteon Address</label>
+				<description>Insteon Address of device.</description>
+			</parameter>
+			<parameter name="name" type="text" required="true">
+				<label>Name</label>
+				<description>Text description of device.</description>
+			</parameter>
+			<parameter name="deviceid" type="text" readOnly="true">
+				<label>Device Id</label>
+				<description>Insteon device ID.</description>
+			</parameter>
+		</config-description>
+	</thing-type>
+	<thing-type id="leakdetector">
+		<supported-bridge-type-refs>
+			<bridge-type-ref id="ipbridge" />
+		</supported-bridge-type-refs>
+
+		<label>Leak Detector</label>
+		<description>Provide Leak Detection</description>
+
+		<channels>
+			<channel id="dry" typeId="dry_sensor" />
+			<channel id="wet" typeId="wet_sensor" />
+			<channel id="heartbeat" typeId="heartbeat" />
+		</channels>
+
+		<config-description>
+			<parameter name="address" type="text" required="true">
+				<label>Insteon Address</label>
+				<description>Insteon Address of device.</description>
+			</parameter>
+			<parameter name="name" type="text" required="true">
+                <label>Name</label>
+				<description>Text description of device.</description>
+			</parameter>
+			<parameter name="deviceid" type="text" readOnly="true">
+				<label>Device Id</label>
+				<description>Insteon device ID.</description>
+			</parameter>
+		</config-description>
+	</thing-type>
+	<thing-type id="fanlinc">
+		<supported-bridge-type-refs>
+			<bridge-type-ref id="isyBridge" />
+		</supported-bridge-type-refs>
+		<label>Fanlinc</label>
+		<description>Fanlinc</description>
+		<channels>
+			<channel id="load" typeId="loadLevel" />
+			<channel id="load2" typeId="loadLevel" />
+			<channel id="paddleaction" typeId="paddleAction" />
+		</channels>
+		<config-description>
+			<parameter name="address" type="text" required="true">
+				<label>Insteon Address</label>
+				<description>Insteon Address of device.</description>
+			</parameter>
+			<parameter name="name" type="text" required="true">
+				<label>Name</label>
+				<description>Text description of device.</description>
+			</parameter>
+			<parameter name="deviceid" type="text" readOnly="true">
+				<label>Device Id</label>
+				<description>Insteon device ID.</description>
+			</parameter>
+		</config-description>
+	</thing-type>
+	<thing-type id="switch">
+		<supported-bridge-type-refs>
+			<bridge-type-ref id="isyBridge" />
+		</supported-bridge-type-refs>
+		<label>Load Switch</label>
+		<description>Controls non-dimmable loads</description>
+		<channels>
+			<channel id="state" typeId="switchState" />
+			<channel id="paddleaction" typeId="paddleAction" />
+		</channels>
+		<config-description>
+			<parameter name="address" type="text" required="true">
+				<label>Insteon Address</label>
+				<description>Insteon Address of device.</description>
+			</parameter>
+			<parameter name="name" type="text" required="true">
+				<label>Name</label>
+				<description>Text description of device.</description>
+			</parameter>
+			<parameter name="deviceid" type="text" readOnly="true">
+				<label>Device Id</label>
+				<description>Insteon device ID.</description>
+			</parameter>
+		</config-description>
+	</thing-type>
+	<thing-type id="outletlinc">
+		<supported-bridge-type-refs>
+			<bridge-type-ref id="isyBridge" />
+		</supported-bridge-type-refs>
+		<label>Load Switch</label>
+		<description>Controls dimmable loads</description>
+		<channels>
+			<channel id="loadlevel" typeId="loadLevel" />
+		</channels>
+		<config-description>
+			<parameter name="address" type="text" required="true">
+				<label>Insteon Address</label>
+				<description>Insteon Address of device.</description>
+			</parameter>
+			<parameter name="name" type="text" required="true">
+				<label>Name</label>
+				<description>Text description of device.</description>
+			</parameter>
+			<parameter name="deviceid" type="text" readOnly="true">
+				<label>Device Id</label>
+				<description>Insteon device ID.</description>
+			</parameter>
+		</config-description>
+	</thing-type>
+	<thing-type id="dualoutletlinc">
+		<supported-bridge-type-refs>
+			<bridge-type-ref id="isyBridge" />
+		</supported-bridge-type-refs>
+		<label>Dual Outlook Linc</label>
+		<description>Dual Outlook Linc</description>
+		<channels>
+			<channel id="loadlevel1" typeId="loadLevel" />
+			<channel id="loadlevel2" typeId="loadLevel" />
+		</channels>
+		<config-description>
+			<parameter name="address" type="text" required="true">
+				<label>Insteon Address</label>
+				<description>Insteon Address of device.</description>
+			</parameter>
+			<parameter name="name" type="text" required="true">
+				<label>Name</label>
+				<description>Text description of device.</description>
+			</parameter>
+			<parameter name="deviceid" type="text" readOnly="true">
+				<label>Device Id</label>
+				<description>Insteon device ID.</description>
+			</parameter>
+		</config-description>
+	</thing-type>
+	<thing-type id="inlinelincswitch">
+		<supported-bridge-type-refs>
+			<bridge-type-ref id="isyBridge" />
+		</supported-bridge-type-refs>
+		<label>Load Relay</label>
+		<description>Controls non-dimmable loads</description>
+		<channels>
+			<channel id="state" typeId="switchState" />
+		</channels>
+		<config-description>
+			<parameter name="address" type="text" required="true">
+				<label>Insteon Address</label>
+				<description>Insteon Address of device.</description>
+			</parameter>
+			<parameter name="name" type="text" required="true">
+				<label>Name</label>
+				<description>Text description of device.</description>
+			</parameter>
+			<parameter name="deviceid" type="text" readOnly="true">
+				<label>Device Id</label>
+				<description>Insteon device ID.</description>
+			</parameter>
+		</config-description>
+	</thing-type>
+	<thing-type id="garage">
+		<supported-bridge-type-refs>
+			<bridge-type-ref id="isyBridge" />
+		</supported-bridge-type-refs>
+		<label>Garage Door Control</label>
+		<description>Relay and Sensor to open/close garage doors.</description>
+		<channels>
+			<channel id="relay" typeId="switchState" />
+			<channel id="contactSensor" typeId="contact_sensor" />
+		</channels>
+		<config-description>
+			<parameter name="address" type="text" required="true">
+				<label>Insteon Address</label>
+				<description>Insteon Address of device.</description>
+			</parameter>
+			<parameter name="name" type="text" required="true">
+				<label>Name</label>
+				<description>Text description of device.</description>
+			</parameter>
+			<parameter name="deviceid" type="text" readOnly="true">
+				<label>Device Id</label>
+				<description>Insteon device ID.</description>
+			</parameter>
+		</config-description>
+	</thing-type>
+	<thing-type id="keypadlinc8">
+		<supported-bridge-type-refs>
+			<bridge-type-ref id="isyBridge" />
+		</supported-bridge-type-refs>
+		<label>KeyPadLinc Dimmer 8</label>
+		<description>KeyPadLinc Dimmer 8</description>
+		<channels>
+			<channel id="button_a" typeId="keylinc_btn_a" />
+			<channel id="button_b" typeId="keylinc_btn_b" />
+			<channel id="button_c" typeId="keylinc_btn_c" />
+			<channel id="button_d" typeId="keylinc_btn_d" />
+			<channel id="button_e" typeId="keylinc_btn_e" />
+			<channel id="button_f" typeId="keylinc_btn_f" />
+			<channel id="button_g" typeId="keylinc_btn_g" />
+			<channel id="button_h" typeId="keylinc_btn_h" />
+		</channels>
+		<config-description>
+			<parameter name="address" type="text" required="true">
+				<label>Insteon Address</label>
+				<description>Insteon Address of device.</description>
+			</parameter>
+			<parameter name="name" type="text" required="true">
+				<label>Name</label>
+				<description>Text description of device.</description>
+			</parameter>
+			<parameter name="deviceid" type="text" readOnly="true">
+				<label>Device Id</label>
+				<description>Insteon device ID.</description>
+			</parameter>
+		</config-description>
+	</thing-type>
+	<thing-type id="keypadlinc6">
+		<supported-bridge-type-refs>
+			<bridge-type-ref id="isyBridge" />
+		</supported-bridge-type-refs>
+		<label>KeyPadLinc Dimmer 6</label>
+		<description>KeyPadLinc Dimmer 6</description>
+		<channels>
+			<channel id="loadlevel" typeId="loadLevel" />
+			<channel id="paddleaction" typeId="paddleAction" />
+			<channel id="button_a" typeId="keylinc_btn_a" />
+			<channel id="button_b" typeId="keylinc_btn_b" />
+			<channel id="button_c" typeId="keylinc_btn_c" />
+			<channel id="button_d" typeId="keylinc_btn_d" />
+			<channel id="button_e" typeId="keylinc_btn_e" />
+			<channel id="button_f" typeId="keylinc_btn_f" />
+		</channels>
+		<config-description>
+			<parameter name="address" type="text" required="true">
+				<label>Insteon Address</label>
+				<description>Insteon Address of device.</description>
+			</parameter>
+			<parameter name="name" type="text" required="true">
+				<label>Name</label>
+				<description>Text description of device.</description>
+			</parameter>
+			<parameter name="deviceid" type="text" readOnly="true">
+				<label>Device Id</label>
+				<description>Insteon device ID.</description>
+			</parameter>
+		</config-description>
+	</thing-type>
+	<thing-type id="keypadlinc5">
+		<supported-bridge-type-refs>
+			<bridge-type-ref id="isyBridge" />
+		</supported-bridge-type-refs>
+		<label>KeyPadLinc Dimmer 5</label>
+		<description>KeyPadLinc Dimmer 5</description>
+		<channels>
+			<channel id="loadlevel" typeId="loadLevel" />
+			<channel id="paddleaction" typeId="paddleAction" />
+			<channel id="button_a" typeId="keylinc_btn_a" />
+			<channel id="button_b" typeId="keylinc_btn_b" />
+			<channel id="button_c" typeId="keylinc_btn_c" />
+			<channel id="button_d" typeId="keylinc_btn_d" />
+		</channels>
+		<config-description>
+			<parameter name="address" type="text" required="true">
+				<label>Insteon Address</label>
+				<description>Insteon Address of device.</description>
+			</parameter>
+			<parameter name="name" type="text" required="true">
+				<label>Name</label>
+				<description>Text description of device.</description>
+			</parameter>
+			<parameter name="deviceid" type="text" readOnly="true">
+				<label>Device Id</label>
+				<description>Insteon device ID.</description>
+			</parameter>
+		</config-description>
+	</thing-type>
+	<thing-type id="remotelinc8">
+		<supported-bridge-type-refs>
+			<bridge-type-ref id="isyBridge" />
+		</supported-bridge-type-refs>
+		<label>RemoteLinc 8</label>
+		<description>RemoteLinc 8</description>
+		<channels>
+			<channel id="button_a" typeId="remotelinc_btn_a" />
+			<channel id="button_b" typeId="remotelinc_btn_b" />
+			<channel id="button_c" typeId="remotelinc_btn_c" />
+			<channel id="button_d" typeId="remotelinc_btn_d" />
+			<channel id="button_e" typeId="remotelinc_btn_e" />
+			<channel id="button_f" typeId="remotelinc_btn_f" />
+			<channel id="button_g" typeId="remotelinc_btn_g" />
+			<channel id="button_h" typeId="remotelinc_btn_h" />
+		</channels>
+		<config-description>
+			<parameter name="address" type="text" required="true">
+				<label>Insteon Address</label>
+				<description>Insteon Address of device.</description>
+			</parameter>
+			<parameter name="name" type="text" required="true">
+				<label>Name</label>
+				<description>Text description of device.</description>
+			</parameter>
+			<parameter name="deviceid" type="text" readOnly="true">
+				<label>Device Id</label>
+				<description>Insteon device ID.</description>
+			</parameter>
+		</config-description>
+	</thing-type>
+    <thing-type id="smokedetector">
+        <supported-bridge-type-refs>
+            <bridge-type-ref id="isyBridge" />
+        </supported-bridge-type-refs>
+        <label>Smoke Detector</label>
+        <description>Insteon Smoke/CO Detector</description>
+        <channels>
+            <channel id="smokesensor_smoke" typeId="smokesensor_smoke" />
+            <channel id="smokesensor_co" typeId="smokesensor_co" />
+            <channel id="smokesensor_test" typeId="smokesensor_test" />
+            <channel id="smokesensor_unknown_message" typeId="smokesensor_unknown_message" />
+            <channel id="smokesensor_clear" typeId="smokesensor_clear" />
+            <channel id="smokesensor_lowbattery" typeId="smokesensor_lowbattery" />
+            <channel id="smokesensor_malfunction" typeId="smokesensor_malfunction" />
+        </channels>
+        <config-description>
+            <parameter name="address" type="text" required="true">
+                <label>Insteon Address</label>
+                <description>Insteon Address of device.</description>
+            </parameter>
+            <parameter name="name" type="text" required="true">
+                <label>Name</label>
+                <description>Text description of device.</description>
+            </parameter>
+            <parameter name="deviceid" type="text" readOnly="true">
+                <label>Device Id</label>
+                <description>Insteon device ID.</description>
+            </parameter>
+        </config-description>
+    </thing-type>
+    <thing-type id="venstar_thermostat">
+        <supported-bridge-type-refs>
+            <bridge-type-ref id="isyBridge" />
+        </supported-bridge-type-refs>
+        <label>Venstar Thermostat</label>
+        <description>Insteon Venstar Thermostat</description>
+        <channels>
+            <channel id="venstar_temp" typeId="venstar_temp_chan" />
+            <channel id="venstar_humidity" typeId="venstar_humidity_chan" />
+            <channel id="venstar_coolsetpoint" typeId="venstar_coolsetpoint_chan" />
+            <channel id="venstar_heatsetpoint" typeId="venstar_heatsetpoint_chan" />
+            <channel id="venstar_mode" typeId="venstar_mode_chan" />
+            <channel id="venstar_fan" typeId="venstar_fan_chan" />
+            <channel id="venstar_heatcoolstate" typeId="venstar_heatcoolstate_chan" />
+<!--        <channel id="venstar_uom" typeId="venstar_uom_chan" />
+-->            
+            <channel id="venstar_coolcontrol" typeId="venstar_coolcontrol_chan" />
+            <channel id="venstar_heatcontrol" typeId="venstar_heatcontrol_chan" />
+            <channel id="venstar_fancontrol" typeId="venstar_fancontrol_chan" />
+        </channels>
+        <config-description>
+            <parameter name="address" type="text" required="true">
+                <label>Insteon Address</label>
+                <description>Insteon Address of device.</description>
+            </parameter>
+            <parameter name="name" type="text" required="true">
+                <label>Name</label>
+                <description>Text description of device.</description>
+            </parameter>
+            <parameter name="deviceid" type="text" readOnly="true">
+                <label>Device Id</label>
+                <description>Insteon device ID.</description>
+            </parameter>
+        </config-description>
+    </thing-type>
+    <thing-type id="ezx10_rf">
+        <supported-bridge-type-refs>
+            <bridge-type-ref id="isyBridge" />
+        </supported-bridge-type-refs>
+        <label>EZX10-RF Bridge</label>
+        <description>EZX10-RF Bridge</description>
+        <channels>
+            <channel id="Rcvr" typeId="switchState" />
+            <channel id="Rcvr-Lights" typeId="switchState" />
+        </channels>
+        <config-description>
+            <parameter name="address" type="text" required="true">
+                <label>Insteon Address</label>
+                <description>Insteon Address of device.</description>
+            </parameter>
+            <parameter name="name" type="text" required="true">
+                <label>Name</label>
+                <description>Text description of device.</description>
+            </parameter>
+            <parameter name="deviceid" type="text" readOnly="true">
+                <label>Device Id</label>
+                <description>Insteon device ID.</description>
+            </parameter>
+        </config-description>
+    </thing-type>
+	<thing-type id="unrecognized">
+		<supported-bridge-type-refs>
+			<bridge-type-ref id="isyBridge" />
+		</supported-bridge-type-refs>
+		<label>Unrecognized Device</label>
+		<description>Unrecognized Device</description>
+		<channels>
+			<channel id="loadlevel" typeId="loadLevel" />
+		</channels>
+		<config-description>
+			<parameter name="address" type="text" required="true">
+				<label>Insteon Address</label>
+				<description>Insteon Address of device.</description>
+			</parameter>
+			<parameter name="name" type="text" required="true">
+				<label>Name</label>
+				<description>Text description of device.</description>
+			</parameter>
+			<parameter name="deviceid" type="text" readOnly="true">
+				<label>Device Id</label>
+				<description>Insteon device ID.</description>
+			</parameter>
+		</config-description>
+	</thing-type>
+	<channel-type id="contact_sensor">
+		<item-type>Switch</item-type>
+		<label>Contact Sensor</label>
+		<description>Indicates if switch is on or off.
+        </description>
+		<category>Contact Sensor</category>
+		<state readOnly="true" />
+	</channel-type>
+	<channel-type id="OnOff_Sensor">
+		<item-type>Switch</item-type>
+		<label>On/Off</label>
+		<description>Indicates if switch is on or off.
+        </description>
+		<category>Sensor</category>
+		<state readOnly="true" />
+	</channel-type>
+
+    <channel-type id="venstar_temp_chan">
+        <item-type>Number</item-type>
+        <label>Temperature</label>
+        <description>Current Temperature</description>
+        <category>Thermostat</category>
+        <state pattern="%.1f °F" readOnly="true"/>
+    </channel-type>
+    <channel-type id="venstar_humidity_chan">
+        <item-type>Number</item-type>
+        <label>Humidity</label>
+        <description>Current Humidity</description>
+        <category>Thermostat</category>
+        <state pattern="%.1f %" readOnly="true"/>
+    </channel-type>
+    <channel-type id="venstar_coolsetpoint_chan">
+        <item-type>Number</item-type>
+        <label>Cool Setpoint</label>
+        <description>Cool Setpoint</description>
+        <category>Thermostat</category>
+        <state pattern="%.1f °F" readOnly="false"/>
+    </channel-type>
+    <channel-type id="venstar_heatsetpoint_chan">
+        <item-type>Number</item-type>
+        <label>Heat Setpoint</label>
+        <description>Heat Setpoint</description>
+        <category>Thermostat</category>
+        <state pattern="%.1f °F" readOnly="false"/>
+    </channel-type>
+    <channel-type id="venstar_mode_chan">
+        <item-type>String</item-type>
+        <label>Mode</label>
+        <description>Mode Setting</description>
+        <category>Thermostat</category>
+        <state pattern="%s" readOnly="false">
+<!--             <options>
+                <option value="OFF">OFF</option>
+                <option value="HEAT">HEAT</option>
+                <option value="COOL">COOL</option>
+                <option value="AUTO">AUTO</option>
+                <option value="PROGRAM_AUTO">PROGRAM_AUTO</option>
+                <option value="PROGRAM_HEAT">PROGRAM_HEAT</option>
+                <option value="PROGRAM_COOL">PROGRAM_COOL</option>
+            </options>
+ -->        </state>
+    </channel-type>
+    <channel-type id="venstar_fan_chan">
+        <item-type>String</item-type>
+        <label>Fan Setting</label>
+        <description>Fan Setting</description>
+        <category>Thermostat</category>
+        <state pattern="%s" readOnly="false">
+<!--             <options>
+                <option value="OFF">OFF</option>
+                <option value="AUTO">AUTO</option>
+            </options>
+ -->        </state>
+    </channel-type>
+    <channel-type id="venstar_heatcoolstate_chan">
+        <item-type>String</item-type>
+        <label>Heat/Cool State</label>
+        <description>Heat/Cool State</description>
+        <category>Thermostat</category>
+        <state pattern="%s" readOnly="true">
+<!--             <options>
+                <option value="OFF">OFF</option>
+                <option value="HEAT">HEAT</option>
+                <option value="COOL">COOL</option>
+            </options>
+ -->        </state>
+    </channel-type>
+    <channel-type id="venstar_uom_chan">
+        <item-type>Number</item-type>
+        <label>Unit Setting</label>
+        <description>Unit Setting</description>
+        <category>Thermostat</category>
+        <state readOnly="true" />
+    </channel-type>
+    <channel-type id="venstar_coolcontrol_chan">
+        <item-type>Switch</item-type>
+        <label>Cool Control</label>
+        <description>Cool Control status</description>
+        <category>Thermostat</category>
+        <state readOnly="true" />
+    </channel-type>
+    <channel-type id="venstar_heatcontrol_chan">
+        <item-type>Switch</item-type>
+        <label>Heat Control</label>
+        <description>Heat Control status</description>
+        <category>Thermostat</category>
+        <state readOnly="true" />
+    </channel-type>
+    <channel-type id="venstar_fancontrol_chan">
+        <item-type>Switch</item-type>
+        <label>Fan Control</label>
+        <description>Fan Control status</description>
+        <category>Thermostat</category>
+        <state readOnly="true" />
+    </channel-type>
+
+    <channel-type id="smokesensor_smoke">
+        <item-type>Switch</item-type>
+        <label>Smoke Detected</label>
+        <description>Indicates if smoke is detected</description>
+        <category>Sensor</category>
+        <state readOnly="true" />
+    </channel-type>
+    <channel-type id="smokesensor_co">
+        <item-type>Switch</item-type>
+        <label>CO Detected</label>
+        <description>Indicates if carbon monoxide is detected</description>
+        <category>Sensor</category>
+        <state readOnly="true" />
+    </channel-type>
+    <channel-type id="smokesensor_test">
+        <item-type>Switch</item-type>
+        <label>Test</label>
+        <description>Test button pressed</description>
+        <category>Sensor</category>
+        <state readOnly="true" />
+    </channel-type>
+    <channel-type id="smokesensor_unknown_message">
+        <item-type>Switch</item-type>
+        <label>Unknown Message</label>
+        <description>Unknown Message</description>
+        <category>Sensor</category>
+        <state readOnly="true" />
+    </channel-type>
+    <channel-type id="smokesensor_clear">
+        <item-type>Switch</item-type>
+        <label>Clear</label>
+        <description>Smoke Detector Status cleared</description>
+        <category>Sensor</category>
+        <state readOnly="true" />
+    </channel-type>
+    <channel-type id="smokesensor_lowbattery">
+        <item-type>Switch</item-type>
+        <label>Low Battery</label>
+        <description>Smoke Detector Low Battery detected</description>
+        <category>Sensor</category>
+        <state readOnly="true" />
+    </channel-type>
+    <channel-type id="smokesensor_malfunction">
+        <item-type>Switch</item-type>
+        <label>Malfunction</label>
+        <description>Smoke Detector Malfunction detected</description>
+        <category>Sensor</category>
+        <state readOnly="true" />
+    </channel-type>
+
+    <channel-type id="motion_sensor">
+        <item-type>Switch</item-type>
+        <label>Motion</label>
+        <description>Indicates if motion sensed
+        </description>
+        <category>Sensor</category>
+        <state readOnly="true" />
+    </channel-type>
+	<channel-type id="dusk_sensor">
+		<item-type>Switch</item-type>
+		<label>Dusk/Dawn</label>
+		<description>Status light sensor.
+        </description>
+		<category>Sensor</category>
+		<state readOnly="true" />
+	</channel-type>
+	<channel-type id="low_battery_sensor">
+		<item-type>Switch</item-type>
+		<label>Low Battery</label>
+		<description>Indicates if battery charge is low.
+        </description>
+		<category>Sensor</category>
+		<state readOnly="true" />
+	</channel-type>
+	<channel-type id="open_sensor">
+		<item-type>Switch</item-type>
+		<label>Open Sensor</label>
+		<description>Open Sensor
+        </description>
+		<category>Sensor</category>
+		<state readOnly="true" />
+	</channel-type>
+	<channel-type id="closed_sensor">
+		<item-type>Switch</item-type>
+		<label>Closed Sensor</label>
+		<description>>Closed Sensor
+        </description>
+		<category>Sensor</category>
+		<state readOnly="true" />
+	</channel-type>
+	<channel-type id="dry_sensor">
+		<item-type>Switch</item-type>
+		<label>Dry Sensor</label>
+		<description>Dry Sensor
+        </description>
+		<category>Sensor</category>
+		<state readOnly="true" />
+	</channel-type>
+	<channel-type id="wet_sensor">
+		<item-type>Switch</item-type>
+		<label>Wet Sensor</label>
+		<description>>Wet Sensor
+        </description>
+		<category>Sensor</category>
+		<state readOnly="true" />
+	</channel-type>
+	<channel-type id="heartbeat">
+		<item-type>Switch</item-type>
+		<label>Heartbeat</label>
+		<description>Triggers every so often to know still working
+        </description>
+		<category>Sensor</category>
+		<state readOnly="true" />
+	</channel-type>
+
+	<channel-type id="loadLevel">
+		<item-type>Dimmer</item-type>
+		<label>Load Level</label>
+		<description>Increase/decrease the load level</description>
+		<category>DimmableLoad</category>
+		<state min="0" max="100" pattern="%d %%" />
+	</channel-type>
+	<channel-type id="rampRate">
+		<item-type>RampRate</item-type>
+		<label>Ramp Rate</label>
+		<description>Speed that level changes</description>
+		<category>Dimmer</category>
+		<state min="0" max="100" pattern="%d %%" />
+	</channel-type>
+	<channel-type id="switchState">
+		<item-type>Switch</item-type>
+		<label>Off/On</label>
+		<description>On/off status of the switch</description>
+		<category>Switch</category>
+	</channel-type>
+	<channel-type id="keylinc_btn_a">
+		<item-type>Switch</item-type>
+		<label>Button A</label>
+		<description>Indicates if switch is on or off.
+        </description>
+		<category>KeyLinc Button</category>
+	</channel-type>
+	<channel-type id="keylinc_btn_b">
+		<item-type>Switch</item-type>
+		<label>Button B</label>
+		<description>Indicates if switch is on or off.
+        </description>
+		<category>KeyLinc Button</category>
+	</channel-type>
+	<channel-type id="keylinc_btn_c">
+		<item-type>Switch</item-type>
+		<label>Button C</label>
+		<description>Indicates if switch is on or off.
+        </description>
+		<category>KeyLinc Button</category>
+	</channel-type>
+	<channel-type id="keylinc_btn_d">
+		<item-type>Switch</item-type>
+		<label>Button D</label>
+		<description>Indicates if switch is on or off.
+        </description>
+		<category>KeyLinc Button</category>
+	</channel-type>
+	<channel-type id="keylinc_btn_e">
+		<item-type>Switch</item-type>
+		<label>Button E</label>
+		<description>Indicates if switch is on or off.
+        </description>
+		<category>KeyLinc Button</category>
+	</channel-type>
+	<channel-type id="keylinc_btn_f">
+		<item-type>Switch</item-type>
+		<label>Button F</label>
+		<description>Indicates if switch is on or off.
+        </description>
+		<category>KeyLinc Button</category>
+	</channel-type>
+	<channel-type id="keylinc_btn_g">
+		<item-type>Switch</item-type>
+		<label>Button G</label>
+		<description>Indicates if switch is on or off.
+        </description>
+		<category>KeyLinc Button</category>
+	</channel-type>
+	<channel-type id="keylinc_btn_h">
+		<item-type>Switch</item-type>
+		<label>Button H</label>
+		<description>Indicates if switch is on or off.
+        </description>
+		<category>KeyLinc Button</category>
+	</channel-type>
+
+	<channel-type id="remotelinc_btn_a">
+		<item-type>Switch</item-type>
+		<label>Button A</label>
+		<description>Indicates if switch is on or off.
+        </description>
+		<category>RemoteLinc Button</category>
+		<state readOnly="true" />
+	</channel-type>
+	<channel-type id="remotelinc_btn_b">
+		<item-type>Switch</item-type>
+		<label>Button B</label>
+		<description>Indicates if switch is on or off.
+        </description>
+		<category>RemoteLinc Button</category>
+		<state readOnly="true" />
+	</channel-type>
+	<channel-type id="remotelinc_btn_c">
+		<item-type>Switch</item-type>
+		<label>Button C</label>
+		<description>Indicates if switch is on or off.
+        </description>
+		<category>RemoteLinc Button</category>
+		<state readOnly="true" />
+	</channel-type>
+	<channel-type id="remotelinc_btn_d">
+		<item-type>Switch</item-type>
+		<label>Button D</label>
+		<description>Indicates if switch is on or off.
+        </description>
+		<category>RemoteLinc Button</category>
+		<state readOnly="true" />
+	</channel-type>
+	<channel-type id="remotelinc_btn_e">
+		<item-type>Switch</item-type>
+		<label>Button E</label>
+		<description>Indicates if switch is on or off.
+        </description>
+		<category>RemoteLinc Button</category>
+		<state readOnly="true" />
+	</channel-type>
+	<channel-type id="remotelinc_btn_f">
+		<item-type>Switch</item-type>
+		<label>Button F</label>
+		<description>Indicates if switch is on or off.
+        </description>
+		<category>RemoteLinc Button</category>
+		<state readOnly="true" />
+	</channel-type>
+	<channel-type id="remotelinc_btn_g">
+		<item-type>Switch</item-type>
+		<label>Button G</label>
+		<description>Indicates if switch is on or off.
+        </description>
+		<category>RemoteLinc Button</category>
+		<state readOnly="true" />
+	</channel-type>
+	<channel-type id="remotelinc_btn_h">
+		<item-type>Switch</item-type>
+		<label>Button H</label>
+		<description>Indicates if switch is on or off.
+        </description>
+		<category>RemoteLinc Button</category>
+		<state readOnly="true" />
+	</channel-type>
+
+	<channel-type id="program_control">
+		<item-type>String</item-type>
+		<label>Control</label>
+		<description>Program Control</description>
+		<category>Program Control</category>
+	</channel-type>
+	<channel-type id="runIf_switch">
+		<item-type>Switch</item-type>
+		<label>Run</label>
+		<description>Run If Clause for Program</description>
+		<category>Switch</category>
+	</channel-type>
+	<channel-type id="runThen_switch">
+		<item-type>Switch</item-type>
+		<label>Run Then</label>
+		<description>Run Then Clause for Program</description>
+		<category>Switch</category>
+	</channel-type>
+	<channel-type id="runElse_switch">
+		<item-type>Switch</item-type>
+		<label>Run Else</label>
+		<description>Run Else Clause for Program</description>
+		<category>Switch</category>
+	</channel-type>
+	<channel-type id="stop_switch">
+		<item-type>Switch</item-type>
+		<label>Stop</label>
+		<description>Stop the Program</description>
+		<category>Switch</category>
+	</channel-type>
+	<channel-type id="variable_value">
+		<item-type>Number</item-type>
+		<label>Value</label>
+		<description>Current value of variable</description>
+		<category>Variables</category>
+		<state readOnly="false" />
+	</channel-type>
+
+	<channel-type id="paddleAction">
+		<item-type>String</item-type>
+		<label>Paddle Action</label>
+		<description>Represents most recent paddle action</description>
+		<category>Program Control</category>
+	</channel-type>
+	<channel-type id="last_update_date">
+        <item-type>DateTime</item-type>
+        <label>Last Update Time</label>
+        <description>The date/time when ISY last received system update</description>
+        <!-- <state readOnly="true" /> pattern="%1$tF %1$tR" -->
+    </channel-type>
+    <channel-type id="initiate_reconnect">
+        <item-type>Switch</item-type>
+        <label>Button Press</label>
+        <description>Button Press</description>
+        <category>Contact</category>
+    </channel-type>
+</thing:thing-descriptions>
