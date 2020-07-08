@@ -25,6 +25,8 @@
             <channel id="dcm_event" typeId="dcm_event" />
             <channel id="energy_cost_event" typeId="energy_cost_event" />
             <channel id="camera_trigger_event" typeId="camera_trigger_event" />
+	    <channel id="upb_link_activated_event" typeId="upb_link_activated_event"/>
+	    <channel id="upb_link_deactivated_event" typeId="upb_link_deactivated_event"/>
 		</channels>
 		<properties>
 			<property name="modelNumber" />
