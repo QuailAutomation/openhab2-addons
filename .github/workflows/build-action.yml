@@ -35,7 +35,21 @@ jobs:
            mvn -f bundles/org.openhab.binding.omnilink/pom.xml  -Dreport.fail.on.error=false -B install
            echo "::set-output name=file::$(ls bundles/org.openhab.binding.omnilink/target/org.openhab.binding.omnilink-*-SNAPSHOT.jar | sed 's|bundles/org.openhab.binding.omnilink/target/||')"
        - name: Archive
+         if: success()
          uses: actions/upload-artifact@v2
          with:
            name: ${{ steps.build.outputs.file }}
            path: bundles/org.openhab.binding.omnilink/target/org.openhab.binding.omnilink-*-SNAPSHOT.jar
+
+       - name: Upload file to bucket
+         if: success()
+         uses: zdurham/s3-upload-github-action@master
+         with:
+           args: --acl public-read
+         env:
+            FILE: bundles/org.openhab.binding.omnilink/target/org.openhab.binding.omnilink-*-SNAPSHOT.jar
+            AWS_REGION: 'us-west-2'
+            S3_BUCKET: craigham-pub
+            S3_KEY: ${{ steps.build.outputs.file }}
+            AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+            AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }} 
