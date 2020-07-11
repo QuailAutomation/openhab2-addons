@@ -11,9 +11,9 @@ jobs:
 
     steps:
        - name: Checkout repository
-          uses: actions/checkout@v2
-          with:
-            ref: ${{ github.ref }}
+         uses: actions/checkout@v2
+         with:
+           ref: ${{ github.ref }}
        - name: Cache local Maven repository
          uses: actions/cache@v2
          with:
