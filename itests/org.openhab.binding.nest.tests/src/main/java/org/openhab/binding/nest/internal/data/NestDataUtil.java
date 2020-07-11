@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2010-2019 Contributors to the openHAB project
+ * Copyright (c) 2010-2020 Contributors to the openHAB project
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information.
@@ -23,9 +23,9 @@ import java.util.stream.Collectors;
 import javax.measure.Unit;
 import javax.measure.quantity.Temperature;
 
-import org.eclipse.smarthome.core.library.unit.ImperialUnits;
-import org.eclipse.smarthome.core.library.unit.SIUnits;
 import org.openhab.binding.nest.internal.NestUtils;
+import org.openhab.core.library.unit.ImperialUnits;
+import org.openhab.core.library.unit.SIUnits;
 
 /**
  * Utility class for working with Nest test data in unit tests.
@@ -93,5 +93,4 @@ public final class NestDataUtil {
             return new BufferedReader(reader).lines().parallel().collect(Collectors.joining("\n"));
         }
     }
-
 }

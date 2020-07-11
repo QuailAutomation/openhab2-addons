@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2010-2019 Contributors to the openHAB project
+ * Copyright (c) 2010-2020 Contributors to the openHAB project
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information.
@@ -26,20 +26,10 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
-import org.apache.commons.lang.StringUtils;
+import javax.ws.rs.client.ClientBuilder;
+
 import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.eclipse.jdt.annotation.Nullable;
-import org.eclipse.smarthome.config.core.Configuration;
-import org.eclipse.smarthome.core.thing.Bridge;
-import org.eclipse.smarthome.core.thing.ChannelUID;
-import org.eclipse.smarthome.core.thing.Thing;
-import org.eclipse.smarthome.core.thing.ThingStatus;
-import org.eclipse.smarthome.core.thing.ThingStatusDetail;
-import org.eclipse.smarthome.core.thing.binding.BaseBridgeHandler;
-import org.eclipse.smarthome.core.thing.binding.ThingHandler;
-import org.eclipse.smarthome.core.types.Command;
-import org.eclipse.smarthome.core.types.RefreshType;
-import org.eclipse.smarthome.io.net.http.HttpUtil;
 import org.openhab.binding.nest.internal.NestUtils;
 import org.openhab.binding.nest.internal.config.NestBridgeConfiguration;
 import org.openhab.binding.nest.internal.data.ErrorData;
@@ -54,6 +44,18 @@ import org.openhab.binding.nest.internal.rest.NestAuthorizer;
 import org.openhab.binding.nest.internal.rest.NestStreamingRestClient;
 import org.openhab.binding.nest.internal.rest.NestUpdateRequest;
 import org.openhab.binding.nest.internal.update.NestCompositeUpdateHandler;
+import org.openhab.core.config.core.Configuration;
+import org.openhab.core.io.net.http.HttpUtil;
+import org.openhab.core.thing.Bridge;
+import org.openhab.core.thing.ChannelUID;
+import org.openhab.core.thing.Thing;
+import org.openhab.core.thing.ThingStatus;
+import org.openhab.core.thing.ThingStatusDetail;
+import org.openhab.core.thing.binding.BaseBridgeHandler;
+import org.openhab.core.thing.binding.ThingHandler;
+import org.openhab.core.types.Command;
+import org.openhab.core.types.RefreshType;
+import org.osgi.service.jaxrs.client.SseEventSourceFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -73,6 +75,8 @@ public class NestBridgeHandler extends BaseBridgeHandler implements NestStreamin
 
     private final Logger logger = LoggerFactory.getLogger(NestBridgeHandler.class);
 
+    private final ClientBuilder clientBuilder;
+    private final SseEventSourceFactory eventSourceFactory;
     private final List<NestUpdateRequest> nestUpdateRequests = new CopyOnWriteArrayList<>();
     private final NestCompositeUpdateHandler updateHandler = new NestCompositeUpdateHandler(
             this::getPresentThingsNestIds);
@@ -90,8 +94,10 @@ public class NestBridgeHandler extends BaseBridgeHandler implements NestStreamin
      *
      * @param bridge The bridge to connect to Nest with.
      */
-    public NestBridgeHandler(Bridge bridge) {
+    public NestBridgeHandler(Bridge bridge, ClientBuilder clientBuilder, SseEventSourceFactory eventSourceFactory) {
         super(bridge);
+        this.clientBuilder = clientBuilder;
+        this.eventSourceFactory = eventSourceFactory;
     }
 
     /**
@@ -253,7 +259,7 @@ public class NestBridgeHandler extends BaseBridgeHandler implements NestStreamin
             logger.debug("PUT response: {}", jsonResponse);
 
             ErrorData error = NestUtils.fromJson(jsonResponse, ErrorData.class);
-            if (StringUtils.isNotBlank(error.getError())) {
+            if (error.getError() != null && !error.getError().isBlank()) {
                 logger.debug("Nest API error: {}", error);
                 logger.warn("Nest API error: {}", error.getMessage());
             }
@@ -316,7 +322,8 @@ public class NestBridgeHandler extends BaseBridgeHandler implements NestStreamin
         synchronized (this) {
             try {
                 NestStreamingRestClient localStreamingRestClient = new NestStreamingRestClient(
-                        getExistingOrNewAccessToken(), getOrCreateRedirectUrlSupplier(), scheduler);
+                        getExistingOrNewAccessToken(), clientBuilder, eventSourceFactory,
+                        getOrCreateRedirectUrlSupplier(), scheduler);
                 localStreamingRestClient.addStreamingDataListener(this);
                 localStreamingRestClient.start();
 
@@ -373,5 +380,4 @@ public class NestBridgeHandler extends BaseBridgeHandler implements NestStreamin
             }
         }
     }
-
 }

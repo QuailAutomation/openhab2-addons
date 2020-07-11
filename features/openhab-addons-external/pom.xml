@@ -1,15 +1,16 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
     <groupId>org.openhab.addons.features.karaf</groupId>
     <artifactId>org.openhab.addons.reactor.features.karaf</artifactId>
-    <version>2.5.0-SNAPSHOT</version>
+    <version>3.0.0-SNAPSHOT</version>
   </parent>
 
-  <artifactId>org.openhab.addons.features.karaf.openhab-addons-external</artifactId>
+  <artifactId>org.openhab.addons.features.karaf.openhab-addons-external3</artifactId>
   <packaging>pom</packaging>
 
   <name>openHAB Add-ons :: Features :: Karaf :: Add-ons External</name>
@@ -30,29 +31,34 @@
             <configuration>
               <artifacts>
                 <artifact>
-                  <file>src/main/resources/conf/cometvisu.cfg</file>
+                  <file>src/main/resources/conf/dynamodb.cfg</file>
                   <type>cfg</type>
-                  <classifier>cometvisu</classifier>
+                  <classifier>dynamodb</classifier>
                 </artifact>
                 <artifact>
-                  <file>src/main/resources/conf/voicerss.cfg</file>
+                  <file>src/main/resources/conf/influxdb.cfg</file>
                   <type>cfg</type>
-                  <classifier>voicerss</classifier>
+                  <classifier>influxdb</classifier>
                 </artifact>
                 <artifact>
-                  <file>src/main/resources/conf/openhabcloud.cfg</file>
+                  <file>src/main/resources/conf/jdbc.cfg</file>
                   <type>cfg</type>
-                  <classifier>openhabcloud</classifier>
+                  <classifier>jdbc</classifier>
                 </artifact>
                 <artifact>
-                  <file>src/main/resources/lib/libLeap.dylib</file>
-                  <type>lib</type>
-                  <classifier>libLeap</classifier>
+                  <file>src/main/resources/conf/jpa.cfg</file>
+                  <type>cfg</type>
+                  <classifier>jpa</classifier>
                 </artifact>
                 <artifact>
-                  <file>src/main/resources/lib/libLeapJava.dylib</file>
-                  <type>lib</type>
-                  <classifier>libLeapJava</classifier>
+                  <file>src/main/resources/conf/mapdb.cfg</file>
+                  <type>cfg</type>
+                  <classifier>mapdb</classifier>
+                </artifact>
+                <artifact>
+                  <file>src/main/resources/conf/rrd4j.cfg</file>
+                  <type>cfg</type>
+                  <classifier>rrd4j</classifier>
                 </artifact>
               </artifacts>
             </configuration>

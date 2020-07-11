@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2010-2019 Contributors to the openHAB project
+ * Copyright (c) 2010-2020 Contributors to the openHAB project
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information.
@@ -17,31 +17,31 @@ import java.time.ZonedDateTime;
 import java.util.Collection;
 import java.util.Date;
 import java.util.TimeZone;
+import java.util.stream.Collectors;
 
 import javax.measure.Quantity;
 import javax.measure.Unit;
 
-import org.apache.commons.lang.StringUtils;
 import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.eclipse.jdt.annotation.Nullable;
-import org.eclipse.smarthome.core.library.types.DateTimeType;
-import org.eclipse.smarthome.core.library.types.DecimalType;
-import org.eclipse.smarthome.core.library.types.OnOffType;
-import org.eclipse.smarthome.core.library.types.QuantityType;
-import org.eclipse.smarthome.core.library.types.StringType;
-import org.eclipse.smarthome.core.thing.Bridge;
-import org.eclipse.smarthome.core.thing.ChannelUID;
-import org.eclipse.smarthome.core.thing.Thing;
-import org.eclipse.smarthome.core.thing.ThingStatus;
-import org.eclipse.smarthome.core.thing.ThingStatusDetail;
-import org.eclipse.smarthome.core.thing.ThingStatusInfo;
-import org.eclipse.smarthome.core.thing.binding.BaseThingHandler;
-import org.eclipse.smarthome.core.types.State;
-import org.eclipse.smarthome.core.types.UnDefType;
 import org.openhab.binding.nest.internal.config.NestDeviceConfiguration;
 import org.openhab.binding.nest.internal.data.NestIdentifiable;
 import org.openhab.binding.nest.internal.listener.NestThingDataListener;
 import org.openhab.binding.nest.internal.rest.NestUpdateRequest;
+import org.openhab.core.library.types.DateTimeType;
+import org.openhab.core.library.types.DecimalType;
+import org.openhab.core.library.types.OnOffType;
+import org.openhab.core.library.types.QuantityType;
+import org.openhab.core.library.types.StringType;
+import org.openhab.core.thing.Bridge;
+import org.openhab.core.thing.ChannelUID;
+import org.openhab.core.thing.Thing;
+import org.openhab.core.thing.ThingStatus;
+import org.openhab.core.thing.ThingStatusDetail;
+import org.openhab.core.thing.ThingStatusInfo;
+import org.openhab.core.thing.binding.BaseThingHandler;
+import org.openhab.core.types.State;
+import org.openhab.core.types.UnDefType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -158,7 +158,7 @@ public abstract class NestBaseHandler<T> extends BaseThingHandler
     }
 
     protected <U extends Quantity<U>> State getAsQuantityTypeOrNull(@Nullable Number value, Unit<U> unit) {
-        return value == null ? UnDefType.NULL : new QuantityType<U>(value, unit);
+        return value == null ? UnDefType.NULL : new QuantityType<>(value, unit);
     }
 
     protected State getAsStringTypeOrNull(@Nullable Object value) {
@@ -166,7 +166,8 @@ public abstract class NestBaseHandler<T> extends BaseThingHandler
     }
 
     protected State getAsStringTypeListOrNull(@Nullable Collection<?> values) {
-        return values == null || values.isEmpty() ? UnDefType.NULL : new StringType(StringUtils.join(values, ","));
+        return values == null || values.isEmpty() ? UnDefType.NULL
+                : new StringType(values.stream().map(v -> v.toString()).collect(Collectors.joining(",")));
     }
 
     protected boolean isNotHandling(NestIdentifiable nestIdentifiable) {
@@ -200,5 +201,4 @@ public abstract class NestBaseHandler<T> extends BaseThingHandler
     }
 
     protected abstract void update(T oldData, T data);
-
 }

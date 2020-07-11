@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2010-2019 Contributors to the openHAB project
+ * Copyright (c) 2010-2020 Contributors to the openHAB project
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information.
@@ -15,12 +15,12 @@ package org.openhab.persistence.mapdb;
 import static org.hamcrest.CoreMatchers.*;
 import static org.junit.Assert.*;
 
-import org.eclipse.smarthome.core.library.types.HSBType;
-import org.eclipse.smarthome.core.library.types.OnOffType;
-import org.eclipse.smarthome.core.library.types.PercentType;
-import org.eclipse.smarthome.core.library.types.StringType;
-import org.eclipse.smarthome.core.types.State;
 import org.junit.Test;
+import org.openhab.core.library.types.HSBType;
+import org.openhab.core.library.types.OnOffType;
+import org.openhab.core.library.types.PercentType;
+import org.openhab.core.library.types.StringType;
+import org.openhab.core.types.State;
 import org.openhab.persistence.mapdb.internal.StateTypeAdapter;
 
 import com.google.gson.Gson;
@@ -31,9 +31,7 @@ import com.google.gson.GsonBuilder;
  * @author Martin Kühl - Initial contribution
  */
 public class StateTypeAdapterTest {
-    Gson mapper = new GsonBuilder()
-        .registerTypeHierarchyAdapter(State.class, new StateTypeAdapter())
-        .create();
+    Gson mapper = new GsonBuilder().registerTypeHierarchyAdapter(State.class, new StateTypeAdapter()).create();
 
     @Test
     public void readWriteRoundtripShouldRecreateTheWrittenState() {

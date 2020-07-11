@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2010-2019 Contributors to the openHAB project
+ * Copyright (c) 2010-2020 Contributors to the openHAB project
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information.
@@ -21,24 +21,29 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Stream;
 
+import javax.ws.rs.client.ClientBuilder;
+
 import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.eclipse.jdt.annotation.Nullable;
-import org.eclipse.smarthome.config.discovery.DiscoveryService;
-import org.eclipse.smarthome.core.thing.Bridge;
-import org.eclipse.smarthome.core.thing.Thing;
-import org.eclipse.smarthome.core.thing.ThingTypeUID;
-import org.eclipse.smarthome.core.thing.ThingUID;
-import org.eclipse.smarthome.core.thing.binding.BaseThingHandlerFactory;
-import org.eclipse.smarthome.core.thing.binding.ThingHandler;
-import org.eclipse.smarthome.core.thing.binding.ThingHandlerFactory;
 import org.openhab.binding.nest.internal.discovery.NestDiscoveryService;
 import org.openhab.binding.nest.internal.handler.NestBridgeHandler;
 import org.openhab.binding.nest.internal.handler.NestCameraHandler;
 import org.openhab.binding.nest.internal.handler.NestSmokeDetectorHandler;
 import org.openhab.binding.nest.internal.handler.NestStructureHandler;
 import org.openhab.binding.nest.internal.handler.NestThermostatHandler;
+import org.openhab.core.config.discovery.DiscoveryService;
+import org.openhab.core.thing.Bridge;
+import org.openhab.core.thing.Thing;
+import org.openhab.core.thing.ThingTypeUID;
+import org.openhab.core.thing.ThingUID;
+import org.openhab.core.thing.binding.BaseThingHandlerFactory;
+import org.openhab.core.thing.binding.ThingHandler;
+import org.openhab.core.thing.binding.ThingHandlerFactory;
 import org.osgi.framework.ServiceRegistration;
+import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
+import org.osgi.service.jaxrs.client.SseEventSourceFactory;
 
 /**
  * The {@link NestHandlerFactory} is responsible for creating things and thing
@@ -53,7 +58,16 @@ public class NestHandlerFactory extends BaseThingHandlerFactory {
     private static final Set<ThingTypeUID> SUPPORTED_THING_TYPES_UIDS = Stream.of(THING_TYPE_THERMOSTAT,
             THING_TYPE_CAMERA, THING_TYPE_BRIDGE, THING_TYPE_STRUCTURE, THING_TYPE_SMOKE_DETECTOR).collect(toSet());
 
-    private Map<ThingUID, @Nullable ServiceRegistration<?>> discoveryService = new HashMap<>();
+    private final ClientBuilder clientBuilder;
+    private final SseEventSourceFactory eventSourceFactory;
+    private final Map<ThingUID, @Nullable ServiceRegistration<?>> discoveryService = new HashMap<>();
+
+    @Activate
+    public NestHandlerFactory(@Reference ClientBuilder clientBuilder,
+            @Reference SseEventSourceFactory eventSourceFactory) {
+        this.clientBuilder = clientBuilder;
+        this.eventSourceFactory = eventSourceFactory;
+    }
 
     /**
      * The things this factory supports creating.
@@ -88,7 +102,7 @@ public class NestHandlerFactory extends BaseThingHandlerFactory {
         }
 
         if (THING_TYPE_BRIDGE.equals(thingTypeUID)) {
-            NestBridgeHandler handler = new NestBridgeHandler((Bridge) thing);
+            NestBridgeHandler handler = new NestBridgeHandler((Bridge) thing, clientBuilder, eventSourceFactory);
             NestDiscoveryService service = new NestDiscoveryService(handler);
             service.activate();
             // Register the discovery service.

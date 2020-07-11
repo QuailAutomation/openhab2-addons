@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2010-2019 Contributors to the openHAB project
+ * Copyright (c) 2010-2020 Contributors to the openHAB project
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information.
@@ -18,11 +18,14 @@ import java.util.Collections;
 import java.util.Properties;
 import java.util.Set;
 
-import org.eclipse.smarthome.core.thing.Bridge;
-import org.eclipse.smarthome.core.thing.ThingTypeUID;
+import javax.ws.rs.client.ClientBuilder;
+
 import org.openhab.binding.nest.internal.exceptions.InvalidAccessTokenException;
 import org.openhab.binding.nest.internal.handler.NestBridgeHandler;
 import org.openhab.binding.nest.internal.handler.NestRedirectUrlSupplier;
+import org.openhab.core.thing.Bridge;
+import org.openhab.core.thing.ThingTypeUID;
+import org.osgi.service.jaxrs.client.SseEventSourceFactory;
 
 /**
  * The {@link NestTestBridgeHandler} is a {@link NestBridgeHandler} modified for testing. Using the
@@ -45,13 +48,14 @@ public class NestTestBridgeHandler extends NestBridgeHandler {
         }
     }
 
-    public final static ThingTypeUID THING_TYPE_TEST_BRIDGE = new ThingTypeUID(BINDING_ID, "test_account");
-    public final static Set<ThingTypeUID> SUPPORTED_THING_TYPES = Collections.singleton(THING_TYPE_TEST_BRIDGE);
+    public static final ThingTypeUID THING_TYPE_TEST_BRIDGE = new ThingTypeUID(BINDING_ID, "test_account");
+    public static final Set<ThingTypeUID> SUPPORTED_THING_TYPES = Collections.singleton(THING_TYPE_TEST_BRIDGE);
 
     private String redirectUrl;
 
-    public NestTestBridgeHandler(Bridge bridge, String redirectUrl) {
-        super(bridge);
+    public NestTestBridgeHandler(Bridge bridge, ClientBuilder clientBuilder, SseEventSourceFactory eventSourceFactory,
+            String redirectUrl) {
+        super(bridge, clientBuilder, eventSourceFactory);
         this.redirectUrl = redirectUrl;
     }
 
@@ -59,5 +63,4 @@ public class NestTestBridgeHandler extends NestBridgeHandler {
     protected NestRedirectUrlSupplier createRedirectUrlSupplier() throws InvalidAccessTokenException {
         return new NestTestRedirectUrlSupplier(getHttpHeaders());
     }
-
 }

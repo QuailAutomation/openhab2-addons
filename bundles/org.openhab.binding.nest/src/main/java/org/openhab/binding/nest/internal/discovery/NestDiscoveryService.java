@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2010-2019 Contributors to the openHAB project
+ * Copyright (c) 2010-2020 Contributors to the openHAB project
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information.
@@ -12,8 +12,8 @@
  */
 package org.openhab.binding.nest.internal.discovery;
 
-import static org.eclipse.smarthome.core.thing.Thing.PROPERTY_FIRMWARE_VERSION;
 import static org.openhab.binding.nest.internal.NestBindingConstants.*;
+import static org.openhab.core.thing.Thing.PROPERTY_FIRMWARE_VERSION;
 
 import java.util.HashMap;
 import java.util.List;
@@ -24,10 +24,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.eclipse.jdt.annotation.NonNullByDefault;
-import org.eclipse.smarthome.config.discovery.AbstractDiscoveryService;
-import org.eclipse.smarthome.config.discovery.DiscoveryResultBuilder;
-import org.eclipse.smarthome.core.thing.ThingTypeUID;
-import org.eclipse.smarthome.core.thing.ThingUID;
 import org.openhab.binding.nest.internal.config.NestDeviceConfiguration;
 import org.openhab.binding.nest.internal.config.NestStructureConfiguration;
 import org.openhab.binding.nest.internal.data.BaseNestDevice;
@@ -37,6 +33,10 @@ import org.openhab.binding.nest.internal.data.Structure;
 import org.openhab.binding.nest.internal.data.Thermostat;
 import org.openhab.binding.nest.internal.handler.NestBridgeHandler;
 import org.openhab.binding.nest.internal.listener.NestThingDataListener;
+import org.openhab.core.config.discovery.AbstractDiscoveryService;
+import org.openhab.core.config.discovery.DiscoveryResultBuilder;
+import org.openhab.core.thing.ThingTypeUID;
+import org.openhab.core.thing.ThingUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

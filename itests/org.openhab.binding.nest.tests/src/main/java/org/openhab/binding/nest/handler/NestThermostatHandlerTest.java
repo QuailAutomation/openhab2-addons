@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2010-2019 Contributors to the openHAB project
+ * Copyright (c) 2010-2020 Contributors to the openHAB project
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information.
@@ -12,31 +12,31 @@
  */
 package org.openhab.binding.nest.handler;
 
-import static org.eclipse.smarthome.core.library.types.OnOffType.*;
-import static org.eclipse.smarthome.core.library.unit.ImperialUnits.FAHRENHEIT;
-import static org.eclipse.smarthome.core.library.unit.SIUnits.CELSIUS;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
 import static org.openhab.binding.nest.internal.NestBindingConstants.*;
 import static org.openhab.binding.nest.internal.data.NestDataUtil.*;
+import static org.openhab.core.library.types.OnOffType.*;
+import static org.openhab.core.library.unit.ImperialUnits.FAHRENHEIT;
+import static org.openhab.core.library.unit.SIUnits.CELSIUS;
 
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.eclipse.smarthome.config.core.Configuration;
-import org.eclipse.smarthome.core.library.types.QuantityType;
-import org.eclipse.smarthome.core.library.types.StringType;
-import org.eclipse.smarthome.core.library.unit.SmartHomeUnits;
-import org.eclipse.smarthome.core.thing.Bridge;
-import org.eclipse.smarthome.core.thing.Thing;
-import org.eclipse.smarthome.core.thing.ThingStatus;
-import org.eclipse.smarthome.core.thing.ThingStatusDetail;
-import org.eclipse.smarthome.core.thing.ThingUID;
-import org.eclipse.smarthome.core.thing.binding.builder.ThingBuilder;
 import org.junit.Test;
 import org.openhab.binding.nest.internal.config.NestDeviceConfiguration;
 import org.openhab.binding.nest.internal.handler.NestThermostatHandler;
+import org.openhab.core.config.core.Configuration;
+import org.openhab.core.library.types.QuantityType;
+import org.openhab.core.library.types.StringType;
+import org.openhab.core.library.unit.SmartHomeUnits;
+import org.openhab.core.thing.Bridge;
+import org.openhab.core.thing.Thing;
+import org.openhab.core.thing.ThingStatus;
+import org.openhab.core.thing.ThingStatusDetail;
+import org.openhab.core.thing.ThingUID;
+import org.openhab.core.thing.binding.builder.ThingBuilder;
 
 /**
  * Tests for {@link NestThermostatHandler}.
@@ -297,5 +297,4 @@ public class NestThermostatHandlerTest extends NestThingHandlerOSGiTest {
         handleCommand(channelId, new QuantityType<>(21, CELSIUS));
         assertNestApiPropertyState(THERMOSTAT1_DEVICE_ID, apiPropertyName, "70");
     }
-
 }

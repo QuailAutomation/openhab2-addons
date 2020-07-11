@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2010-2019 Contributors to the openHAB project
+ * Copyright (c) 2010-2020 Contributors to the openHAB project
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information.
@@ -29,43 +29,10 @@ import java.util.Map;
 import java.util.TimeZone;
 import java.util.function.Function;
 
+import javax.ws.rs.client.ClientBuilder;
+
+import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.eclipse.jetty.servlet.ServletHolder;
-import org.eclipse.smarthome.config.core.Configuration;
-import org.eclipse.smarthome.core.events.EventPublisher;
-import org.eclipse.smarthome.core.items.Item;
-import org.eclipse.smarthome.core.items.ItemFactory;
-import org.eclipse.smarthome.core.items.ItemNotFoundException;
-import org.eclipse.smarthome.core.items.ItemRegistry;
-import org.eclipse.smarthome.core.items.events.ItemEventFactory;
-import org.eclipse.smarthome.core.library.types.DateTimeType;
-import org.eclipse.smarthome.core.thing.Bridge;
-import org.eclipse.smarthome.core.thing.Channel;
-import org.eclipse.smarthome.core.thing.ChannelUID;
-import org.eclipse.smarthome.core.thing.ManagedThingProvider;
-import org.eclipse.smarthome.core.thing.Thing;
-import org.eclipse.smarthome.core.thing.ThingProvider;
-import org.eclipse.smarthome.core.thing.ThingTypeUID;
-import org.eclipse.smarthome.core.thing.ThingUID;
-import org.eclipse.smarthome.core.thing.binding.ThingHandlerFactory;
-import org.eclipse.smarthome.core.thing.binding.builder.BridgeBuilder;
-import org.eclipse.smarthome.core.thing.binding.builder.ChannelBuilder;
-import org.eclipse.smarthome.core.thing.link.ItemChannelLink;
-import org.eclipse.smarthome.core.thing.link.ManagedItemChannelLinkProvider;
-import org.eclipse.smarthome.core.thing.type.ChannelDefinition;
-import org.eclipse.smarthome.core.thing.type.ChannelGroupDefinition;
-import org.eclipse.smarthome.core.thing.type.ChannelGroupType;
-import org.eclipse.smarthome.core.thing.type.ChannelGroupTypeRegistry;
-import org.eclipse.smarthome.core.thing.type.ChannelType;
-import org.eclipse.smarthome.core.thing.type.ChannelTypeRegistry;
-import org.eclipse.smarthome.core.thing.type.ThingType;
-import org.eclipse.smarthome.core.thing.type.ThingTypeRegistry;
-import org.eclipse.smarthome.core.types.Command;
-import org.eclipse.smarthome.core.types.RefreshType;
-import org.eclipse.smarthome.core.types.State;
-import org.eclipse.smarthome.core.types.UnDefType;
-import org.eclipse.smarthome.test.TestPortUtil;
-import org.eclipse.smarthome.test.java.JavaOSGiTest;
-import org.eclipse.smarthome.test.storage.VolatileStorageService;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -75,7 +42,44 @@ import org.openhab.binding.nest.test.NestTestApiServlet;
 import org.openhab.binding.nest.test.NestTestBridgeHandler;
 import org.openhab.binding.nest.test.NestTestHandlerFactory;
 import org.openhab.binding.nest.test.NestTestServer;
+import org.openhab.core.config.core.Configuration;
+import org.openhab.core.events.EventPublisher;
+import org.openhab.core.items.Item;
+import org.openhab.core.items.ItemFactory;
+import org.openhab.core.items.ItemNotFoundException;
+import org.openhab.core.items.ItemRegistry;
+import org.openhab.core.items.events.ItemEventFactory;
+import org.openhab.core.library.types.DateTimeType;
+import org.openhab.core.test.TestPortUtil;
+import org.openhab.core.test.java.JavaOSGiTest;
+import org.openhab.core.test.storage.VolatileStorageService;
+import org.openhab.core.thing.Bridge;
+import org.openhab.core.thing.Channel;
+import org.openhab.core.thing.ChannelUID;
+import org.openhab.core.thing.ManagedThingProvider;
+import org.openhab.core.thing.Thing;
+import org.openhab.core.thing.ThingProvider;
+import org.openhab.core.thing.ThingTypeUID;
+import org.openhab.core.thing.ThingUID;
+import org.openhab.core.thing.binding.ThingHandlerFactory;
+import org.openhab.core.thing.binding.builder.BridgeBuilder;
+import org.openhab.core.thing.binding.builder.ChannelBuilder;
+import org.openhab.core.thing.link.ItemChannelLink;
+import org.openhab.core.thing.link.ManagedItemChannelLinkProvider;
+import org.openhab.core.thing.type.ChannelDefinition;
+import org.openhab.core.thing.type.ChannelGroupDefinition;
+import org.openhab.core.thing.type.ChannelGroupType;
+import org.openhab.core.thing.type.ChannelGroupTypeRegistry;
+import org.openhab.core.thing.type.ChannelType;
+import org.openhab.core.thing.type.ChannelTypeRegistry;
+import org.openhab.core.thing.type.ThingType;
+import org.openhab.core.thing.type.ThingTypeRegistry;
+import org.openhab.core.types.Command;
+import org.openhab.core.types.RefreshType;
+import org.openhab.core.types.State;
+import org.openhab.core.types.UnDefType;
 import org.osgi.service.component.ComponentContext;
+import org.osgi.service.jaxrs.client.SseEventSourceFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -113,6 +117,8 @@ public abstract class NestThingHandlerOSGiTest extends JavaOSGiTest {
     private Class<? extends NestBaseHandler<?>> thingClass;
 
     private NestTestHandlerFactory nestTestHandlerFactory;
+    private @NonNullByDefault({}) ClientBuilder clientBuilder;
+    private @NonNullByDefault({}) SseEventSourceFactory eventSourceFactory;
 
     public NestThingHandlerOSGiTest(Class<? extends NestBaseHandler<?>> thingClass) {
         this.thingClass = thingClass;
@@ -153,17 +159,22 @@ public abstract class NestThingHandlerOSGiTest extends JavaOSGiTest {
         managedItemChannelLinkProvider = getService(ManagedItemChannelLinkProvider.class);
         assertThat("Could not get ManagedItemChannelLinkProvider", managedItemChannelLinkProvider, is(notNullValue()));
 
+        clientBuilder = getService(ClientBuilder.class);
+        assertThat("Could not get ClientBuilder", clientBuilder, is(notNullValue()));
+
+        eventSourceFactory = getService(SseEventSourceFactory.class);
+        assertThat("Could not get SseEventSourceFactory", eventSourceFactory, is(notNullValue()));
+
         ComponentContext componentContext = mock(ComponentContext.class);
         when(componentContext.getBundleContext()).thenReturn(bundleContext);
 
-        nestTestHandlerFactory = new NestTestHandlerFactory();
-        nestTestHandlerFactory.setRedirectUrl(REDIRECT_URL);
-        nestTestHandlerFactory.activate(componentContext);
+        nestTestHandlerFactory = new NestTestHandlerFactory(clientBuilder, eventSourceFactory);
+        nestTestHandlerFactory.activate(componentContext,
+                Map.of(NestTestHandlerFactory.REDIRECT_URL_CONFIG_PROPERTY, REDIRECT_URL));
         registerService(nestTestHandlerFactory);
 
         nestTestHandlerFactory = getService(ThingHandlerFactory.class, NestTestHandlerFactory.class);
         assertThat("Could not get NestTestHandlerFactory", nestTestHandlerFactory, is(notNullValue()));
-        nestTestHandlerFactory.setRedirectUrl(REDIRECT_URL);
 
         bridge = buildBridge();
         thing = buildThing(bridge);
@@ -347,5 +358,4 @@ public abstract class NestThingHandlerOSGiTest extends JavaOSGiTest {
             throw new IllegalArgumentException("Invalid date time argument: " + text, e);
         }
     }
-
 }

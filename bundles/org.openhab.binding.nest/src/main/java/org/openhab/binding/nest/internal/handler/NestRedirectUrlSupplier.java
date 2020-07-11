@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2010-2019 Contributors to the openHAB project
+ * Copyright (c) 2010-2020 Contributors to the openHAB project
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information.
@@ -15,7 +15,6 @@ package org.openhab.binding.nest.internal.handler;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 
-import org.apache.commons.lang.StringUtils;
 import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.eclipse.jetty.client.HttpClient;
 import org.eclipse.jetty.client.api.ContentResponse;
@@ -24,9 +23,9 @@ import org.eclipse.jetty.http.HttpHeader;
 import org.eclipse.jetty.http.HttpMethod;
 import org.eclipse.jetty.http.HttpStatus;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
-import org.eclipse.smarthome.io.net.http.HttpUtil;
 import org.openhab.binding.nest.internal.NestBindingConstants;
 import org.openhab.binding.nest.internal.exceptions.FailedResolvingNestUrlException;
+import org.openhab.core.io.net.http.HttpUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -98,7 +97,7 @@ public class NestRedirectUrlSupplier {
             logger.debug("Redirect response: {}", response.getContentAsString());
             throw new FailedResolvingNestUrlException("Failed to get redirect URL, expected status "
                     + HttpStatus.TEMPORARY_REDIRECT_307 + " but was " + status);
-        } else if (StringUtils.isEmpty(redirectUrl)) {
+        } else if (redirectUrl == null || redirectUrl.isEmpty()) {
             throw new FailedResolvingNestUrlException("Redirect URL is empty");
         }
 

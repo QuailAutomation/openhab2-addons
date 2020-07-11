@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2010-2019 Contributors to the openHAB project
+ * Copyright (c) 2010-2020 Contributors to the openHAB project
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information.
@@ -14,14 +14,13 @@ package org.openhab.binding.nest.internal.rest;
 
 import java.io.IOException;
 
-import org.apache.commons.lang.StringUtils;
 import org.eclipse.jdt.annotation.NonNullByDefault;
-import org.eclipse.smarthome.io.net.http.HttpUtil;
 import org.openhab.binding.nest.internal.NestBindingConstants;
 import org.openhab.binding.nest.internal.NestUtils;
 import org.openhab.binding.nest.internal.config.NestBridgeConfiguration;
 import org.openhab.binding.nest.internal.data.AccessTokenData;
 import org.openhab.binding.nest.internal.exceptions.InvalidAccessTokenException;
+import org.openhab.core.io.net.http.HttpUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -54,7 +53,8 @@ public class NestAuthorizer {
      */
     public String getNewAccessToken() throws InvalidAccessTokenException {
         try {
-            if (StringUtils.isEmpty(config.pincode)) {
+            String pincode = config.pincode;
+            if (pincode == null || pincode.isBlank()) {
                 throw new InvalidAccessTokenException("Pincode is empty");
             }
 
@@ -65,7 +65,7 @@ public class NestAuthorizer {
                     .append("&client_secret=")
                     .append(config.productSecret)
                     .append("&code=")
-                    .append(config.pincode)
+                    .append(pincode)
                     .append("&grant_type=authorization_code");
             // @formatter:on
 
@@ -77,14 +77,13 @@ public class NestAuthorizer {
             AccessTokenData data = NestUtils.fromJson(responseContentAsString, AccessTokenData.class);
             logger.debug("Received: {}", data);
 
-            if (StringUtils.isEmpty(data.getAccessToken())) {
+            String accessToken = data.getAccessToken();
+            if (accessToken == null || accessToken.isBlank()) {
                 throw new InvalidAccessTokenException("Pincode to obtain access token is already used or invalid)");
             }
-
-            return data.getAccessToken();
+            return accessToken;
         } catch (IOException e) {
             throw new InvalidAccessTokenException("Access token request failed", e);
         }
     }
-
 }

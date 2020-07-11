@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2010-2019 Contributors to the openHAB project
+ * Copyright (c) 2010-2020 Contributors to the openHAB project
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information.
@@ -19,8 +19,8 @@ import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
-import org.eclipse.smarthome.core.library.unit.SIUnits;
 import org.junit.Test;
+import org.openhab.core.library.unit.SIUnits;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -220,5 +220,4 @@ public class GsonParsingTest {
         assertEquals("blocked", error.getMessage());
         assertEquals("bb514046-edc9-4bca-8239-f7a3cfb0925a", error.getInstance());
     }
-
 }
