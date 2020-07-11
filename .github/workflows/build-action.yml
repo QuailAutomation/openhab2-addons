@@ -32,7 +32,7 @@ jobs:
        - name: Build OmniLink Binding
          id: build
          run: |
-           mvn -f addons/binding/org.openhab.binding.omnilink/pom.xml  -Dreport.fail.on.error=false -B install
+           mvn -f addons/org.openhab.binding.omnilink/pom.xml  -Dreport.fail.on.error=false -B install
            echo "::set-output name=file::$(ls target/org.openhab.binding.omnilink-*-SNAPSHOT.jar | sed 's|target/||')"
       #  - name: Archive
       #    uses: actions/upload-artifact@v2
